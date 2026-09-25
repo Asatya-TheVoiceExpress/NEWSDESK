@@ -1,0 +1,32 @@
+{
+  "app_name": "voiceexpress",
+  "repo": "https://github.com/Asatya-TheVoiceExpress/Newssite.git",
+  "branch": "main",
+
+  "app_dir": "/home/asatya/voice-express",
+  "data_dir": "/srv/ve-data",
+  "service_user": "asatya",
+
+  "bind": "127.0.0.1:8000",
+  "workers": 2,
+  "timeout": 120,
+
+  "enable_pdf": true,
+  "maintenance_schedule": "Mon 04:00",
+  "git_push": true,
+
+  "secret_key": "",
+
+  "public_url": "cloudflare",
+  "domain": "thevoiceexpress.org",
+
+  "_notes": {
+    "app_dir": "where the code is checked out (deploy.sh clones/pulls here)",
+    "data_dir": "persistent disk for DB + uploads + publications + media; survives redeploys",
+    "service_user": "Linux user that owns the files and runs the service",
+    "secret_key": "leave empty to auto-generate once into data_dir/.flask_secret",
+    "public_url": "'cloudflare' (free tunnel, no port-forward), 'nginx' (own IP/domain), or 'none'",
+    "enable_pdf": "true installs headless Chromium for broadsheet/gazette PDF export",
+    "git_push": "true -> the weekly maintenance commits the DB + media and pushes to origin (the server's git remote must be push-authenticated)"
+  }
+}

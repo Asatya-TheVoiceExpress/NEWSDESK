@@ -1,0 +1,504 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>The Voice Express — January 2026 — Broadsheet (Scroll)</title>
+<style>
+:root{--ink:#16140f;--paper:#f4efe2;--g:#5b5547;--rule:2px solid #16140f;--thin:1px solid #8a8273;--accent:#7a2018}
+*{box-sizing:border-box}
+@page{size:420mm 297mm;margin:11mm 12mm}
+html,body{margin:0;background:transparent;font-family:"Georgia","Times New Roman",serif;color:var(--ink)}
+.bs-sheet{position:relative;width:100%;max-width:396mm;margin:0 auto;padding:0 0 28mm 0;
+  background-color:var(--paper);
+  /* Real newsprint texture, not a flat fill: a tiled SVG fractal-noise
+     grain (paper fiber) plus a soft radial vignette darkening the corners
+     (real broadsheet stock isn't lit evenly edge-to-edge, and a printed
+     sheet's outer edge always reads a touch duller than its center) --
+     both subtle enough to stay invisible at reading distance/zoom, only
+     registering as "this isn't a flat digital rectangle" the way the
+     rest of this module's ink-rule/frame work already aims for. */
+  background-image:
+    radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(22,20,15,.05) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.086  0 0 0 0 0.078  0 0 0 0 0.059  0 0 0 0.045 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-repeat:no-repeat,repeat;
+  background-size:100% 100%,120px 120px;
+  page-break-after:always;min-height:297mm}
+.bs-sheet:last-child{page-break-after:auto}
+/* One real STORY MODULE (see _bs_module_html): a headline banner across
+   the module's full width, with that story's own body flowing beneath it
+   through real CSS columns with rules between -- the actual structural
+   unit a newspaper page is built from. No box around the module itself:
+   the heavy rule above the headline and the column rules inside are what
+   separate one story from the next, exactly like newsprint, instead of
+   every piece carrying its own outlined rectangle. */
+.bs-module{border-top:3px solid var(--ink);padding:1.6mm 0 0;box-sizing:border-box}
+.bs-mod-head{border-bottom:1px solid var(--ink);padding-bottom:1.2mm;margin-bottom:1.6mm}
+.bs-mod-head .bs-hl{font-size:1.5rem;line-height:1.06}
+.bs-mod-head .bs-deck{font-size:.8rem;margin:.2rem 0 .1rem}
+/* `column-fill:balance` (NOT `auto`) is load-bearing: with `auto` the
+   browser fills column 1 to its full height before starting column 2, so
+   a module whose height comes FROM that same layout just stacks all its
+   text in the first column and leaves the rest of its width blank --
+   exactly the bug the first module-packer render showed. Balancing
+   spreads the real content evenly across every column of the module, so
+   a 3- or 4-column story actually reads across its full width. */
+.bs-mod-body{column-gap:6mm;column-rule:1px solid #d4cfc0;column-fill:balance}
+.bs-mod-body > *{break-inside:avoid-column}
+.bs-mod-body p{margin:0 0 .18rem;text-indent:1.05em;text-align:justify;hyphens:auto;
+  font-size:.7rem;line-height:1.32;
+  /* Real newsprint hyphenation limits -- without these, `hyphens:auto`
+     at this narrow a measure happily breaks two-letter fragments off a
+     word and stacks hyphens on consecutive lines, which reads as broken
+     rather than typeset. */
+  -webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;
+  hyphenate-limit-chars:6 3 3;hyphenate-limit-lines:2}
+.bs-mod-body p:first-of-type{text-indent:0}
+.bs-mod-body .bs-quote{border-left:3px solid var(--accent);padding:.1rem 0 .1rem 2mm;margin:.3rem 0;
+  font-family:"Playfair Display","Georgia",serif;font-style:italic;font-size:.86rem;line-height:1.26;
+  text-indent:0;font-weight:600}
+.bs-mod-body .bs-sub{font-size:.86rem;margin:.45rem 0 .2rem;text-indent:0}
+/* Photos SPAN the whole module rather than being trapped inside one
+   ~48mm text column. A figure sitting in the normal column flow is
+   limited to a single column's width, which at this (deliberately dense)
+   measure renders press photography as an unreadable thumbnail --
+   `column-span:all` runs it across the story's full width instead, the
+   real newspaper treatment, and the text simply resumes in columns
+   underneath. Heights are capped so a tall portrait can't swallow the
+   whole module (the long-standing `width:100%`-with-no-height-constraint
+   hazard this file already documents elsewhere). */
+.bs-mod-body .bs-fig,.bs-mod-body .bs-strip{column-span:all;margin:.5rem 0 .6rem}
+.bs-mod-body .bs-fig img{max-height:56mm;object-fit:contain;object-position:center}
+.bs-mod-body .bs-fig figcaption{font-size:.62rem}
+.bs-mod-body .bs-strip img{max-height:44mm;object-fit:cover}
+/* A story carrying several figures shouldn't turn into a photo album:
+   past the first two, each additional one steps down further, so a
+   photo-heavy article still leads with real imagery but its prose keeps
+   the majority of the module (the 82mm/64mm caps this replaces let two
+   stacked images swallow an entire story). */
+.bs-mod-body .bs-fig:nth-of-type(n+3) img{max-height:38mm}
+/* A photo-group spanning the full module can afford real panel sizes --
+   its own inner column-count no longer has to squeeze into one text
+   column, so widen the grid tracks instead of multiplying tiny ones. */
+.bs-mod-body .bs-strip[data-type="dump"],.bs-mod-body .bs-strip[data-type="grid"],
+.bs-mod-body .bs-strip[data-type="collage"]{column-count:3;column-gap:2mm}
+.bs-mod-body .bs-strip[data-type="crowd"]{column-count:4;column-gap:1.6mm}
+.bs-col-rule{position:absolute;width:1px;background:#d4cfc0;pointer-events:none;z-index:0}
+.bs-side-label{position:absolute;left:0;top:0;height:100%;width:8mm;display:flex;
+  align-items:center;justify-content:center;pointer-events:none;z-index:1;
+  /* Fixed real mm width (was `2.0em`, a font-relative unit that could
+     render wider than the page's own 12mm side margin depending on
+     rotated-glyph metrics -- found bleeding into the first real column's
+     body text on a real edition). `overflow:hidden` is the hard
+     backstop: whatever the rotated span's true footprint turns out to
+     be, it can never visually escape this reserved strip and encroach
+     on real content again. */
+  overflow:hidden}
+.bs-side-label span{display:inline-block;font-family:var(--fm,Georgia,serif);font-size:.6rem;
+  font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);
+  border-top:1px solid var(--accent);border-bottom:1px solid var(--accent);padding:.25em .1em;
+  white-space:nowrap;transform:rotate(-90deg);transform-origin:center center}
+.bs-fig-feat img{width:100%;max-height:48mm;object-fit:contain;background:var(--paper)}
+@import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
+.bs-mast{text-align:center;margin-bottom:0.7rem;padding:0 0 0.5rem}
+.bs-mast-rule{height:0;margin:0;border-top:3px double var(--ink)}
+.bs-mast-rule-top{margin-bottom:.5rem}
+.bs-mast-rule-mid{border-top:1px solid var(--ink);margin:.4rem 0}
+.bs-mast-rule2{margin-top:.45rem}
+.bs-mast-name{font-family:"Pirata One","Playfair Display","Old English Text MT","Georgia",serif;
+  font-weight:400;font-size:5.6rem;letter-spacing:.5px;line-height:.9;margin:0;text-align:center;
+  text-rendering:optimizeLegibility;text-shadow:0.35px 0 0 var(--ink)}
+.bs-mast-tag{text-align:center;font-style:italic;font-size:1.0rem;color:var(--g);letter-spacing:.03em;margin-top:.15rem}
+.bs-mast-note{text-align:center;font-size:.68rem;font-style:italic;color:var(--accent);margin-top:.25rem}
+.bs-mast-byline{display:flex;justify-content:space-between;align-items:baseline;margin-top:.5rem;
+  font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g)}
+.bs-mast-seg-c{font-weight:700;color:var(--ink)}
+.bs-mast-seg-r{text-align:right}
+.bs-standfirst{border-top:1px solid #d4cfc0;border-bottom:1px solid #d4cfc0;padding:0.6rem 0;margin:0.8rem 0 1rem;
+  display:flex;gap:1rem;align-items:baseline}
+.bs-sf-lbl{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;white-space:nowrap;color:var(--accent)}
+.bs-standfirst p{margin:0;font-style:italic;font-size:.90rem;line-height:1.45;color:#322d22}
+.bs-runhead{display:flex;justify-content:space-between;font-size:.60rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--g);border-bottom:1px solid #d4cfc0;padding-bottom:.4rem;margin-bottom:0.8rem}
+.bs-covernote{font-style:italic;font-size:.76rem;color:var(--accent);text-align:center;margin:0.4rem 0 0.6rem}
+.bs-index{border-top:1px solid #d4cfc0;border-bottom:1px solid #d4cfc0;padding:0.5rem 0;margin:0.8rem 0 1rem;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0 1.2rem;font-size:.66rem;min-width:0;overflow:hidden}
+.bs-index .bs-sf-lbl{grid-column:1/-1;display:block;margin-bottom:.4rem;color:var(--accent)}
+/* min-width:0 on both the grid item and the flex item is required for
+   text-overflow:ellipsis to actually engage -- flex/grid children default to
+   min-width:auto, which keeps them at their content's natural width no
+   matter what overflow/white-space says, so without this the whole row
+   silently pushed past the page edge on both sides instead of eliding (found
+   via a live rendered-page review, not a guess). */
+.bs-idx-row{display:flex;justify-content:space-between;gap:.5rem;border-bottom:1px dotted #b3ab98;padding:.15rem 0;
+  page-break-inside:avoid;min-width:0}
+.bs-idx-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.bs-idx-p{color:var(--accent);font-weight:700;flex:0 0 auto}
+.bs-banner{border-bottom:2px solid #d4cfc0;padding-bottom:0.8rem;margin-bottom:1rem;page-break-inside:avoid}
+.bs-banner-hl{font-family:"Playfair Display","Georgia",serif;font-weight:900;font-size:4.0rem;
+  line-height:0.98;letter-spacing:-.8px;margin:0 0 0.4rem;text-align:center;
+  text-rendering:optimizeLegibility;text-shadow:0.3px 0 0 var(--ink)}
+.bs-banner-deck{font-style:italic;font-size:1.2rem;line-height:1.35;text-align:center;color:#352f24;
+  max-width:80%;margin:0.4rem auto 0.6rem}
+.bs-banner .bs-kicker{text-align:center;font-size:.68rem}
+.bs-banner .bs-byline{text-align:center}
+.bs-banner-hero{margin:0.8rem 0 0}
+.bs-banner-hero img{width:100%;max-height:180mm;object-fit:contain;background:var(--paper);display:block;border:1px solid var(--g)}
+.bs-grid{column-count:unset;display:grid;grid-template-columns:repeat(3,1fr);gap:0 8mm;text-align:justify;hyphens:auto}
+.bs-col{padding:0;border-right:1px solid #d4cfc0;break-inside:avoid}
+.bs-col:last-child{border-right:none}
+.bs-col > *{padding:0 2mm}
+/* Ornamental frame for the wave-packer's own standalone pieces (see
+   _bs_wave_pack_pages) -- unlike '.bs-col's plain border-right (meant for
+   siblings inside one shared multi-column grid, .bs-grid), each packed
+   piece here is independently positioned with nothing beside it, so a
+   full box border reads correctly. Double-rule motif matches the
+   masthead's own '.bs-mast-rule' treatment elsewhere in this stylesheet,
+   not a new decorative idea. `border-right:none` overrides '.bs-col's own
+   rule so the frame isn't cut short on one edge.*/
+.bs-framed{border-top:3px solid var(--ink);border-bottom:1px solid var(--ink);
+  border-left:1px solid var(--ink);border-right:2px solid var(--ink);padding:3mm 4mm;
+  box-sizing:border-box;position:relative;
+  /* A faint offset "ghost" shadow -- real cut/pasted clippings on a
+     paste-up board (the literal origin of "cut and paste" layout) sit a
+     hair proud of the page, catching a soft shadow; a flat outlined box
+     reads as a digital rectangle. Kept very low-contrast/blurred so it
+     stays a felt detail, not a UI card shadow. */
+  box-shadow:1.1mm 1.1mm 1.8mm rgba(22,20,15,.12)}
+.bs-framed > *{padding:0}
+/* Corner brackets -- two rule segments of DELIBERATELY different
+   thickness meeting at opposite corners (a thick rule one way, a thin
+   rule the other), pure geometry -- no glyphs/dingbats. Absolutely
+   positioned ::before/::after, so this never participates in normal flow
+   and can't perturb the real Playwright measurement every piece's real
+   w/h was fit from (measuring happens against this exact same
+   '.bs-framed' class already, see _bs_natural_size's own comment on why
+   that measure/render consistency matters). */
+.bs-framed::before,.bs-framed::after{content:"";position:absolute;width:7mm;height:7mm;pointer-events:none}
+.bs-framed::before{top:-2px;left:-2px;border-top:3px solid var(--accent);border-left:1px solid var(--accent)}
+.bs-framed::after{bottom:-2px;right:-2px;border-bottom:3px solid var(--accent);border-right:1px solid var(--accent)}
+/* Plain running-text pieces (ordinary body paragraphs, not a headline/
+   photo/quote/squared feature) deliberately skip the full ornamental box:
+   a page where EVERY single packed paragraph gets its own thick-ruled
+   card reads as a wall of index cards, not a newspaper page. A single
+   top rule is enough separation between neighbouring pieces while letting
+   plain text read as continuous column copy. */
+.bs-plain{border-top:1px solid #d4cfc0;border-right:3px double #c9c2ac;padding:2.5mm 4mm 1mm 1.5mm;
+  box-sizing:border-box}
+.bs-plain > *{padding:0}
+/* Third visual tier, between '.bs-framed' (heavy double-rule, its own
+   distinct unit) and '.bs-plain' (bare running copy): a real newspaper
+   boxes short 'in brief' filler items with a light single rule, not the
+   same ornamental weight as a feature/photo. See _bs_wave_pack_pages'
+   role -> frame_cls lookup. */
+.bs-boxed{border:1px solid var(--ink);padding:2mm 3mm;box-sizing:border-box;
+  box-shadow:0.8mm 0.8mm 1.2mm rgba(22,20,15,.08)}
+.bs-boxed > *{padding:0}
+/* Real pull-quote treatment for the 'quote' role -- no surrounding box
+   at all (was '.bs-framed', the same heavy double-rule frame a headline
+   or photo gets), just a thick accent rule down the left edge and
+   large-scale italic serif type, the actual real-newspaper convention
+   for a pulled quote. Kept visually distinct from every boxed role so
+   not every piece on the page reads as an identical bordered rectangle. */
+.bs-pullquote{border-left:4px solid var(--accent);padding:1mm 0 1mm 4mm;box-sizing:border-box;
+  background:rgba(122,32,24,.035)}
+.bs-pullquote > *{padding:0}
+.bs-pullquote .bs-quote{border-left:none;padding-left:0;font-size:1.15rem;line-height:1.32;
+  font-family:"Playfair Display","Georgia",serif;font-weight:600}
+.bs-pullquote .bs-q-who{font-size:.62rem}
+/* Front-page organic filler pieces (see _bs_front_extras) -- puzzle/logo/
+   QR/links/month-year get the same '.bs-framed' box treatment as real
+   content pieces (packed the same way, into the same kind of guillotine
+   free space); rotated quotes and the wordmark accents are pure "text
+   art", deliberately unboxed. */
+.bs-front-puzzle,.bs-front-logo,.bs-front-qr,.bs-front-links,.bs-front-monthyear{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;height:100%;text-align:center}
+.bs-front-puzzle .bsk-grid{width:88%}
+.bs-front-puzzle-cap{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--g);margin-top:.4rem}
+.bs-front-logo img{max-width:80%;max-height:80%;object-fit:contain}
+.bs-front-monthyear{font-family:"Playfair Display","Georgia",serif;font-weight:900;
+  font-size:1.6rem;letter-spacing:.04em;line-height:1.05}
+.bs-front-qr img{width:60%;height:auto}
+.bs-front-qr-label{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g);margin-top:.3rem}
+.bs-front-links{font-size:.68rem;line-height:1.9;color:var(--g)}
+.bs-front-quote{font-family:"Playfair Display","Georgia",serif;font-style:italic;font-weight:700;
+  font-size:.86rem;line-height:1.3;color:var(--accent);opacity:.55;text-align:center}
+.bs-front-wordmark{font-family:"Pirata One","Playfair Display",serif;font-size:1.1rem;
+  color:var(--ink);opacity:.16;text-align:center;letter-spacing:.03em;white-space:nowrap}
+.bs-front-haiku{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;height:100%;text-align:center;font-family:"Playfair Display","Georgia",serif;
+  font-style:italic;font-size:.82rem;line-height:1.5;color:var(--ink)}
+.bs-front-haiku-cap{font-family:"Georgia",serif;font-style:normal;font-size:.58rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--g);margin-top:.4rem}
+/* Front-page hero boxes (see create_broadsheet_project's front-page
+   layout): the wide centre 'bs-lead-box' and narrow flanking
+   'bs-side-box'es are both real 'bs_column' blocks, just at varied real
+   widths instead of a uniform grid -- see the long citation comment above
+   `front_continuations` in create_broadsheet_project for the real Scribus
+   template this box-width pattern was cross-checked against. */
+.bs-lead-box{padding:0 4mm}
+.bs-lead-box .bs-head-lead{border-bottom:none;padding-bottom:0}
+.bs-lead-box .bs-head-lead .bs-hl{font-size:2.9rem}
+.bs-lead-hero{margin:0 0 .6rem}
+.bs-lead-hero img{width:100%;max-height:150mm;object-fit:cover;display:block;border:1px solid var(--g)}
+.bs-lead-hero figcaption{font-size:.62rem;color:#5a5247;padding:.25rem 0;border-bottom:1px solid #d4cfc0}
+.bs-lead-body{column-count:2;column-gap:8mm;column-rule:1px solid #d4cfc0;text-align:justify;hyphens:auto}
+.bs-lead-body p{margin:0;font-size:.83rem;line-height:1.44;text-indent:1.05em;orphans:2;widows:2}
+.bs-lead-body p[data-role="lede"]{text-indent:0}
+.bs-side-box{padding:0 3mm;border-left:1px solid #d4cfc0;border-right:1px solid #d4cfc0}
+.bs-side-box .bs-hl{font-size:1.3rem}
+.bs-side-box .bs-deck{font-style:italic}
+.bs-side-box p{font-size:.79rem}
+.bs-head{margin:0.2rem 0 0.4rem;break-inside:avoid;orphans:2;widows:2}
+.bs-kicker{font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--accent);
+  margin-bottom:.2rem;display:flex;align-items:center;gap:.4em}
+.bs-kicker::before{content:"";display:inline-block;width:3px;height:.85em;background:var(--accent);flex:0 0 auto}
+.bs-hl{font-family:"Playfair Display","Georgia",serif;font-weight:800;line-height:1.04;margin:0 0 .25rem;
+  font-size:1.15rem;text-rendering:optimizeLegibility;
+  /* A hairline dark text-shadow at the SAME color as the ink, offset a
+     fraction of a pixel -- reads as a touch of real letterpress ink
+     spread on a large serif headline rather than a flat vector fill,
+     without softening the glyph edges enough to look blurry at normal
+     zoom (kept off small/running text below, where it'd just read as
+     mud). */
+  text-shadow:0.25px 0 0 var(--ink)}
+.bs-head-lead .bs-hl{font-size:2.4rem;line-height:1.0;letter-spacing:-.6px}
+.bs-head-lead{border-bottom:2px solid #d4cfc0;padding-bottom:0.4rem;margin-bottom:0.6rem}
+.bs-deck{font-style:italic;font-size:.84rem;line-height:1.4;color:#352f24;margin:.15rem 0 .25rem}
+.bs-head-lead .bs-deck{font-size:1.0rem;line-height:1.42}
+.bs-byline{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--g);margin-bottom:.35rem}
+.bs-col p{margin:0;font-size:.72rem;line-height:1.28;text-indent:1.05em;orphans:2;widows:2;
+  text-align:justify;hyphens:auto}
+.bs-col p[data-role="lede"]{text-indent:0;font-size:.77rem;line-height:1.26}
+/* Real column-width-driven type scale (see the block-emission loop's
+   span_cls, from the same real `span` _bs_natural_size already sized
+   the piece's WIDTH from) -- a real newspaper tightens leading and
+   trims size a touch in a narrow 1-column brief, and opens both up in a
+   wide 3-4 column feature, rather than every column running the same
+   fixed size regardless of measure. Baseline sizes dropped overall
+   (.81->.72rem, 1.42->1.28 leading) to match a real dense newsprint
+   column measure now that `_bs_col_count` runs narrower (~48mm)
+   columns -- the old size read fine at 65mm but went loose/gappy at
+   this narrower width, undermining the "dense newsprint" read the
+   narrower grid was meant to create. Justified + `hyphens:auto` also
+   added here -- real newsprint text is justified with hyphenation to
+   keep a narrow column's rag from getting ugly; ragged-right at this
+   measure looked distinctly un-newspaper. Defined here (ahead of
+   .bs-tmpl-feature/.bs-tmpl-brief below) so their own already-tuned
+   scale still wins by source order on an equal-specificity selector. */
+.bs-col.bs-span-1 p{font-size:.68rem;line-height:1.24}
+.bs-col.bs-span-1 .bs-hl{font-size:.92rem}
+.bs-col.bs-span-3 p,.bs-col.bs-span-4 p{font-size:.78rem;line-height:1.34}
+.bs-col.bs-span-3 .bs-hl,.bs-col.bs-span-4 .bs-hl{font-size:1.2rem}
+.bs-sub{font-family:"Playfair Display","Georgia",serif;font-weight:700;font-size:.98rem;margin:.55rem 0 .25rem;text-indent:0}
+.bs-quote{margin:.5rem 0;padding:.25rem 0 .25rem 0.6mm;border-left:3px solid var(--accent);
+  font-style:italic;font-size:.88rem;line-height:1.38;text-indent:0;page-break-inside:avoid}
+.bs-q-who{display:block;font-style:normal;font-size:.60rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g);margin-top:.3rem}
+.bs-list{margin:.4rem 0 .4rem 1.1rem;font-size:.79rem;line-height:1.38}
+.bs-fig{margin:.5rem 0;break-inside:avoid;page-break-inside:avoid}
+.bs-fig img{width:100%;display:block;border:1px solid var(--g);margin-bottom:.3rem}
+.bs-fig figcaption{font-size:.60rem;line-height:1.3;color:#5a5247;padding:.2rem 0;text-indent:0;border-bottom:1px solid #d4cfc0}
+/* real photo-group ("collage panel") print treatments, one per SEMANTIC.md
+   data-type, ported from the reader's .art-content .photo-group[data-type=
+   ...] rules (which already had these worked out) and re-themed onto the
+   broadsheet's own --ink/--paper/--accent vars -- kept as ONE atomic
+   fragment by _blocks()'s emit_group() instead of exploding into loose
+   bs-fig images, so a collage/sequence/comic actually reads as one designed
+   unit, matchable by the packer against a real wide/square rectangle. */
+.bs-strip{margin:.5rem 0;break-inside:avoid;page-break-inside:avoid}
+.bs-strip img{display:block;width:100%;height:auto;border:1px solid var(--g)}
+.bs-strip figure{margin:0}
+.bs-strip figcaption{font-size:.58rem;line-height:1.28;color:#5a5247;padding:.2rem 0;text-indent:0}
+.bs-strip[data-type="dump"],.bs-strip[data-type="grid"],.bs-strip[data-type="collage"]{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:.4rem}
+.bs-strip[data-type="crowd"]{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem}
+.bs-strip[data-type="sequence"]{display:block;counter-reset:bs-seq}
+.bs-strip[data-type="sequence"] figure{counter-increment:bs-seq;display:flex;align-items:center;
+  gap:.9rem;margin:0 0 .55rem}
+.bs-strip[data-type="sequence"] figure:last-child{margin-bottom:0}
+.bs-strip[data-type="sequence"] figure:nth-child(even){flex-direction:row-reverse}
+.bs-strip[data-type="sequence"] img{flex:0 0 54%;width:54%}
+.bs-strip[data-type="sequence"] figcaption{flex:1;border:none}
+.bs-strip[data-type="sequence"] figcaption::before{content:counter(bs-seq,decimal-leading-zero) " / ";
+  font-weight:700;color:var(--accent)}
+.bs-strip[data-type="comic"]{display:block;background:var(--ink);border:2px solid var(--ink);
+  padding:3px;counter-reset:bs-pan}
+.bs-strip[data-type="comic"] figure{background:var(--paper);margin:0 0 3px;counter-increment:bs-pan}
+.bs-strip[data-type="comic"] figure:last-child{margin-bottom:0}
+.bs-strip[data-type="comic"] figcaption{padding:.25rem .4rem;font-style:italic}
+.bs-strip[data-type="comic"] figcaption::before{content:counter(bs-pan) ". "; font-weight:700;
+  font-style:normal;color:var(--accent)}
+/* Column calendar-collage (see _bs_blast_columns) -- real column count set
+   inline per instance (daily/weekly/monthly/custom all share this one
+   grid base, just at a different cell count), so data-type isn't one of
+   the photo-group types above and needs its own base display:grid rule. */
+.bs-colcal{display:grid;gap:.3rem}
+.bs-colcal figcaption{text-align:center}
+.bs-colcal-empty{border:1px dashed #b3ab98;min-height:12mm;
+  background:repeating-linear-gradient(45deg,var(--paper),var(--paper) 4px,#e5ddc9 4px,#e5ddc9 5px)}
+.bs-colcal-text{border:1px solid var(--g);padding:.3rem;font-size:.58rem;line-height:1.25;
+  display:flex;flex-direction:column;gap:.2rem;min-height:12mm}
+.bs-colcal-text span{font-weight:700;color:var(--accent);font-size:.54rem;letter-spacing:.06em;text-transform:uppercase}
+/* ornamental vertical divider between packed pieces, up to half the page's
+   content height -- a real decorative rule, occasionally carrying a short
+   rotated pull-quote. The outer box gets a fixed real w/h and the rotated
+   text is a flex-centered child, same fix as the front-page bs-side-label's
+   own rotation (a transform:rotate anchored at the box's own left/top edge
+   swings half its footprint into negative-x/y and gets clipped -- centering
+   the rotation inside a correctly-sized box avoids that whole bug class). */
+.bs-divider{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--accent);
+  border-right:1px solid var(--accent)}
+.bs-divider-quote{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.bs-divider-quote span{display:inline-block;white-space:nowrap;transform:rotate(-90deg);
+  font-family:"Playfair Display","Georgia",serif;font-style:italic;font-size:.82rem;
+  color:var(--accent);letter-spacing:.02em}
+/* A quote-less divider gets a second inner vertical rule (see
+   render_block_html's bs_divider case for the real per-instance
+   thickness/height, seeded off the block's own id) at a DIFFERENT
+   thickness than the divider's own 1px flanking rules -- pure rule
+   geometry, no glyphs. */
+.bs-divider-plain{position:relative}
+/* brief-tier pieces (small packed rectangles) -- compact type, no drop cap,
+   the density the old fixed 6-box 'briefs' grid was going for, now applied
+   per-piece by real packed size instead of only in that one discarded
+   template. */
+.bs-tmpl-brief .bs-col p,.bs-col.bs-tmpl-brief p{font-size:.70rem;line-height:1.3}
+.bs-tmpl-brief .bs-hl,.bs-col.bs-tmpl-brief .bs-hl{font-size:.92rem}
+.bs-tmpl-brief .bs-kicker,.bs-col.bs-tmpl-brief .bs-kicker{font-size:.5rem}
+.bs-tmpl-brief .bs-quote,.bs-col.bs-tmpl-brief .bs-quote{font-size:.74rem;padding-left:.4rem}
+.bs-hero{margin:0 0 .5rem}
+.bs-hero img{width:100%;display:block;border:1px solid var(--g)}
+.bs-jump{font-size:.60rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+  padding:.3rem 0;border-top:1px solid var(--g);margin-top:.4rem;text-indent:0;color:var(--accent)}
+.bs-jump-from{border-top:none;border-bottom:1px solid var(--g);margin:0 0 .4rem;color:var(--ink)}
+.bs-jump-from em{font-style:italic;text-transform:none;letter-spacing:0}
+.bs-foot{position:absolute;left:12mm;right:12mm;bottom:6mm;display:flex;justify-content:space-between;
+  font-size:.58rem;letter-spacing:.10em;text-transform:uppercase;color:var(--g);border-top:2px solid #d4cfc0;padding-top:.5rem}
+.bs-foot::before{content:"";position:absolute;top:-5px;left:50%;transform:translateX(-50%);
+  width:3px;height:10px;background:var(--accent)}
+.bs-section-head{border-bottom:3px double var(--ink);margin-bottom:1rem;padding-bottom:0.5rem;page-break-inside:avoid}
+.bs-section-head h2{font-family:"Playfair Display","Georgia",serif;font-weight:900;font-size:2.3rem;margin:0;font-variant:small-caps}
+.bs-section-sub{font-style:italic;color:var(--g);font-size:.85rem}
+.bs-colcards{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}
+.bs-colcard{border:1px solid #d4cfc0;padding:0.8rem;page-break-inside:avoid}
+.bs-colcard-img{height:125px;overflow:hidden;border:1px solid var(--g);margin-bottom:.5rem;background:var(--paper);
+  display:flex;align-items:center;justify-content:center}
+.bs-colcard-img img{width:100%;height:100%;object-fit:contain}
+.bs-colcard-kick{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:#7a2018;font-weight:700;margin-bottom:.15rem}
+.bs-colcard-title{font-family:"Playfair Display",serif;font-weight:700;font-size:1.05rem;line-height:1.15;margin:0.1rem 0}
+.bs-colcard-sub{font-style:italic;font-size:.80rem;color:#352f24;margin:.3rem 0}
+.bs-colcard-date{font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;color:var(--g);margin-top:.4rem}
+.bs-backgrid{display:grid;grid-template-columns:1fr 1fr;gap:10mm;align-items:start}
+.bs-puzzle{text-align:center;page-break-inside:avoid}
+.bsk-grid{display:grid;grid-template-columns:repeat(9,1fr);width:75%;margin:0 auto;border:2.5px solid var(--ink)}
+.bsk-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:1px solid #b3ab98;
+  font-size:1.05rem;font-weight:600}
+.bsk-rb{border-right:2px solid var(--ink)}
+.bsk-bb{border-bottom:2px solid var(--ink)}
+.bsw-grid{display:grid;width:88%;margin:0 auto;border:2px solid var(--ink)}
+.bsw-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:.5px solid #b3ab98;
+  font-size:.62rem;font-weight:600;letter-spacing:.02em}
+.bsw-words{margin-top:.4rem;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:var(--g);
+  display:flex;flex-wrap:wrap;gap:.5em;justify-content:center}
+.bsc-grid{display:flex;flex-direction:column;gap:5px;align-items:center}
+.bsc-row{display:flex;gap:2px}
+.bsc-cell{width:1.05em;height:1.4em;border-bottom:1px solid var(--ink);display:flex;align-items:flex-end;
+  justify-content:center;font-size:.6rem;font-weight:600;padding-bottom:1px}
+.bsc-gap{width:.6em}
+.bs-puzzle-cap{font-style:italic;color:var(--g);margin-top:.8rem;font-size:.80rem;line-height:1.35}
+.bs-supp-head{font-family:"Playfair Display",serif;font-weight:700;font-size:1.25rem;margin-bottom:0.8rem;border-bottom:1px solid #d4cfc0;padding-bottom:0.4rem}
+.bs-supp{display:grid;grid-template-columns:68px 1fr;gap:.7rem;align-items:flex-start;margin-bottom:0.9rem;page-break-inside:avoid}
+.bs-qr{width:68px;height:68px;flex-shrink:0}
+.bs-qr-x{display:flex;align-items:center;justify-content:center;border:1px solid var(--g);color:var(--g);width:68px;height:68px;font-size:.65rem}
+.bs-supp-l{font-weight:700;font-size:.88rem;line-height:1.2}
+.bs-supp-n{grid-column:2;font-size:.70rem;color:#5a5247;line-height:1.35}
+.bs-supp-wrap{}
+.bs-colophon{grid-column:1/-1;margin-top:1.2rem;border-top:2px solid #d4cfc0;padding-top:0.8rem;font-size:.70rem;line-height:1.42;color:#352f24}
+.bs-egg{user-select:none}
+.bs-credit{display:block;font-style:italic;opacity:.75;margin-top:.1rem}
+/* inner-page template variants (varied section-driven look, see
+   create_broadsheet_project's per-page dominant-section pick) */
+.bs-tmpl-feature .bs-grid{grid-template-columns:repeat(2,1fr)}
+.bs-tmpl-feature .bs-col p,.bs-col.bs-tmpl-feature p{font-size:.92rem;line-height:1.56}
+.bs-tmpl-feature .bs-col p[data-role="lede"]::first-letter,
+.bs-tmpl-feature .bs-col > p:first-of-type::first-letter,
+.bs-col.bs-tmpl-feature > p:first-of-type::first-letter{
+  float:left;font-family:"Playfair Display",serif;font-weight:900;font-size:3.1em;
+  line-height:.78;padding:.03em .06em 0 0;color:var(--accent)}
+.bs-tmpl-feature .bs-quote,.bs-col.bs-tmpl-feature .bs-quote{font-size:1.05rem;padding-left:1rem;border-left-width:4px}
+.bs-tmpl-feature .bs-hl,.bs-col.bs-tmpl-feature .bs-hl{font-size:1.4rem}
+/* `.bs-fig-feat` (a secondary/deferred story's own featured image, prepended
+   ahead of its body by _story()) was designed for the front page's narrow
+   ~91mm secondary-story columns, where a flat 48mm object-fit:contain cap
+   keeps one photo from dominating a short excerpt -- inside the new inner-
+   page 'feature' template's WIDER ~132mm text slots that same fixed cap
+   just letterboxes most real (portrait/square) photos into a small,
+   padded, off-centre-looking rectangle (found via a live visual review of
+   a real generated feature page). Scoped to `.bs-tmpl-feature` only, so the
+   front page's own untouched rendering of the same class is unaffected --
+   drop the cap so the photo scales to its natural aspect at full column
+   width instead, same as every other in-body figure on a feature page.*/
+.bs-col.bs-tmpl-feature .bs-fig-feat img{max-height:none}
+.bs-tmpl-label{font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  font-weight:700;margin-bottom:.5rem;grid-column:1/-1}
+/* full-bleed generative back cover */
+.bs-backcover{position:absolute;inset:0;overflow:hidden}
+.bs-backcover-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bs-backcover-plate{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(244,239,226,.0) 0%,rgba(244,239,226,.0) 45%,rgba(244,239,226,.55) 100%)}
+.bs-backcover-mono{position:absolute;top:50%;left:50%;transform:translate(-50%,-165mm);
+  width:34mm;height:34mm;border-radius:50%;background:var(--paper);border:2px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(244,239,226,.55)}
+.bs-backcover-mono img{width:70%;height:70%;object-fit:contain}
+.bs-backcover-mono-fallback{font-family:"Playfair Display",serif;font-weight:900;font-size:1.35rem;
+  letter-spacing:.02em;color:var(--ink)}
+.bs-backcover-qr-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;background:var(--paper);
+  border:2px solid var(--ink);padding:8mm 10mm 6mm;box-shadow:0 0 0 6px rgba(244,239,226,.55)}
+.bs-backcover-qr-wrap img{width:38mm;height:38mm}
+.bs-backcover-qr-label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--g);margin-top:.5rem}
+.bs-backcover-foot{position:absolute;left:0;right:0;bottom:34mm;text-align:center;
+  font-family:"Playfair Display",serif;font-size:.78rem;letter-spacing:.08em;color:var(--ink);
+  background:rgba(244,239,226,.72);padding:.3rem 0}
+@media print{body{margin:0;padding:0}}
+
+html{scroll-behavior:smooth}
+.bs-scroll-page{max-width:920px;margin:0 auto;padding:14mm 5mm 0;background:var(--paper)}
+/* .bs-mast-name's 5.2rem size was calibrated for the paginated page's real
+   ~1122px print width -- at this page's 920px max-width it wrapped to two
+   lines, which claimed most of the .bs-mast grid's width and squeezed the
+   two meta side-columns down to nothing, wrapping "FEBRUARY 2024"/"FREE --
+   SUPPORTED BY READERS" one word per line (found via a live browser check).
+   Scale the name down and keep the meta corners on one line each. */
+.bs-scroll-page .bs-mast-name{font-size:3.4rem}
+.bs-scroll-page .bs-mast-meta-l,.bs-scroll-page .bs-mast-meta-r{white-space:nowrap}
+.bs-scroll-page .bs-col{border-right:none;text-align:justify;hyphens:auto}
+.bs-scroll-page .bs-col > *{padding:0}
+.bs-scroll-lead{margin-top:1.1rem}
+.bs-scroll-secondary{margin:0}
+.bs-scroll-story{border-top:1px solid #d4cfc0;padding-top:1.1rem;margin-top:1.5rem}
+.bs-scroll-section{margin-bottom:0.5rem}
+.bs-scroll-index{grid-template-columns:1fr!important}
+.bs-scroll-index .bs-idx-row{flex-direction:row;align-items:baseline;gap:.8rem;white-space:normal}
+.bs-scroll-index .bs-idx-t{overflow:visible;text-overflow:clip;white-space:normal;color:var(--ink);
+  text-decoration:none;font-weight:600;flex:1 1 auto;min-width:0}
+.bs-scroll-index .bs-idx-t:hover{text-decoration:underline;color:var(--accent)}
+.bs-scroll-index .bs-idx-p{font-style:italic;font-weight:400;font-size:.6rem;letter-spacing:.08em;
+  text-transform:uppercase;flex:0 0 auto}
+.bs-scroll-back{margin:2.5rem auto 0;border-top:3px double var(--ink)}
+.bs-scroll-foot{text-align:center;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--g);padding:1.2rem 0 2rem}
+
+
+
+</style></head><body>
+<div class="bs-scroll-page"><header class="bs-mast">
+      <div class="bs-mast-rule bs-mast-rule-top"><span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(-7deg);display:inline-block;vertical-align:middle;white-space:nowrap">T</span></div>
+      <h1 class="bs-mast-name">The Voice Express</h1>
+      <div class="bs-mast-tag">The Truth Takes Time. <span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(-3deg);display:inline-block;vertical-align:middle;white-space:nowrap">U</span></div>
+      <div class="bs-mast-rule bs-mast-rule-mid"></div>
+      <div class="bs-mast-byline">
+        <span class="bs-mast-seg bs-mast-seg-l"><span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(5deg);display:inline-block;vertical-align:middle;white-space:nowrap">R</span> Vol. 13 &middot; New Delhi, India</span>
+        <span class="bs-mast-seg bs-mast-seg-c">January 2026</span>
+        <span class="bs-mast-seg bs-mast-seg-r">https://thevoiceexpress.in <span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(6deg);display:inline-block;vertical-align:middle;white-space:nowrap">T</span></span>
+      </div>
+      <div class="bs-mast-note">Free — Supported by readers</div>
+      <div class="bs-mast-rule bs-mast-rule2"><span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(-5deg);display:inline-block;vertical-align:middle;white-space:nowrap">H</span></div>
+    </header><div id="story-0-matters-of-money-43-organisations-demand" class="bs-scroll-lead"><div class="bs-banner"><div class="bs-kicker">INTERNATIONAL</div><h2 class="bs-banner-hl">&#x27;Matters of Money&#x27;: 43 Organisations Demand India&#x27;s Withdrawal From Bilateral Investment Agreement with Israel Amidst Ongoing Genocide In Gaza</h2><p class="bs-banner-deck">On 8th September 2025, India and Israel&#x27;s finance ministers signed a Bilateral Investment Agreement in New Delhi. Forty-three organisations and forty-seven individuals released an open letter calling on India to withdraw from the treaty — calling it a material contribution to an ongoing genocide in Gaza.</p><div class="bs-byline">By Mouli Sharma</div><figure class="bs-banner-hero"><img src="data:image/jpeg;base64,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" alt=""></figure></div><div class="bs-col bs-tmpl-feature"><p data-role="subtitle">On 8th September 2025, India &amp; Israel&#x27;s Finance Ministers signed a vague and opaque investment treaty in New Delhi that doubles down on the two nations&#x27; existing trade relations with an increased focus on incentivising and protecting investors—all amidst an ongoing genocide being perpetrated by Israel along the Gaza Strip.</p><p data-role="lede">15th September 2025, New Delhi : On 13th September 2025, 43 organisations and 47 individuals, including academics, journalists, and activists released an open letter calling upon the government of India to withdraw from the recently signed Bilateral Investment Agreement (BIA) between India and Israel amidst the ongoing genocide in Gaza.</p><p>Though the treaty has not yet been made accessible to the public, with neither participating country&#x27;s foreign affairs portfolio having listed it as an active bilateral agreement at time of writing, the concerned organisations viewed protesting it as a necessary step.</p><p data-role="testimony">&quot;Any strengthening of relationship between India and Israel needs to be condemned,&quot; said Anjali S. from Indians for Palestine explaining the rationale behind calling for a withdrawal from the treaty before its release to the public. &quot;No matter how good or bad, severe or non-severe the consequences are of the same,&quot; she finished.</p><p>She also added that the treaty&#x27;s unavailability and the opaque process of India&#x27;s international policy itself was an added cause for concern.</p><p>Specifically, the letter criticised the BIA&#x27;s latent encouragement of the two countries defence trade, which saw its all-time high at the start of the &#x27;Israel-Gaza conflict&#x27; in 2023.</p><p>After a consortium led by Gautam Adani&#x27;s Adani Ports and Special Economic Zone Ltd (APSEZ) acquired the rights to operate the Haifa Port Company Ltd from the Government of Israel with an overall investment of US$ 1.18 billion, India&#x27;s weapons imports from Israel nearly doubled from 134 million USD in 2022 to a peak 265 million USD in 2023.</p><p>Ironically, this same financial year marked a decline of India&#x27;s own exports to Israel.</p><p data-role="testimony">&quot;India’s trade with Israel began tapering off in 2023,&quot; wrote Ishaan Gera for MoneyControl in June this year. &quot;India’s exports to Israel fell from a peak of $7.6 million in 2022 to $6.1 million in 2023 and to $2.1 million in 2024.&quot;</p><p>India&#x27;s bilateral arms and ammunitions trade has grown 33 times over the past decade of the Modi regime, from 5.6 million USD in 2015 to 185 million USD in 2024, but except explosives and base metals, these constitute largely of imports. Since the onset of Israel&#x27;s genocidal destruction of the Gaza Strip, disturbing allegations regarding the nature of Israel&#x27;s weapons industry have triggered international condemnation , including the use of untested Artificial Intelligence (AI) on long range lethal weapons being used on Palestinians.</p><p>In the meeting on Monday, Sitharaman brought up the Ramot Junction Shooting that took place in Jerusalem earlier the same day.</p><p data-role="testimony">&quot;Finance Minister Smt. Nirmala Sitharaman expressed her condolences over the loss of innocent lives in terrorist attack in Israel today (sic),&quot; read the PIB release. &quot;She also mentioned about the shared value of civilizational ethos of two countries which contributed to the global peace. Both Ministers acknowledged the threat of terrorism faced by both the countries and expressed solidarity with each other (sic).&quot;</p><p>The terrorist attack in question took place at the bus junction in Ramot, an Israeli settlement in East Jerusalem along the Occupied West Bank (OWB), where two gunmen suspected to be from neighbouring Palestinian villages opened fire at the public during morning rush hour, killing 5 and injuring 21. Notably, 6 Indians had just died in a gunfight at the Manipur-Assam border the prior morning on the 7th of September 2025, but the incident remained unmentioned through the discussion on India and Israel&#x27;s shared struggles with terrorism and the loss of innocent lives.</p><p>On the night of the 6th of September, at about 8:30 PM, 13 Palestinians were killed and dozens injured while waiting for aid in As Sudaniya area in western North Gaza. The next day, on the 7th of September, Israeli strikes killed at least 50 people and destroyed at least 50 buildings in Gaza, as reported by Vatican News . On 8 September, the same day the terrorist attack that Sitharaman condemned took place in Israel killing 5, six Palestinians, including three males, were killed and 15 injured while waiting for supply trucks along the Morag corridor, south of Khan Younis.</p><p>Neither minister commented on any of the above.</p><p>In fact, no mention was made of the ongoing genocide in Gaza being perpetrated by the Israeli government at all, which has so far killed over 65,000 people , or the eight decade long occupation of Palestinian land which has historically been the subject of much diplomatic criticism from India and other formerly colonised nations.</p><p>In their four-page letter condemning the agreement and calling upon the Government of India (GOI) to withdraw from it, 90 signatories have criticised this diplomatic 180, and compared the ruling Bharatiya Janata Party&#x27;s politics to that of the Netanyahu run Likud in Israel.</p><p data-role="testimony">&quot;India’s current stance abandons a proud legacy. Historically, India was a steadfast supporter of Palestinian self-determination, among the first to recognise Palestine in 1988. That position grew out of India’s anti-colonial struggle and commitment to justice for all peoples. Today, narrow geopolitical gains and the BJP’s majoritarian politics, akin to Israel’s, have replaced that legacy,&quot; the letter says.</p><p>Notable signatories of the letter include Palestine solidarity organisations like Indians for Palestine and Indian Dancers for Gaza&#x27;s Children ; leftist organisations such as COLLECTIVE (Delhi) , Communist Party of India (Marxist-Leninist) (CPIML) , Communist Party of India (Marxist-Leninist) New Democracy ; feminist organisations such as Feminists in Resistance (Kolkata) , Forum Against Oppression of Women , &amp; the National Federation of Indian Women (NFIW) ; alongside many others.</p><p>In July earlier this year, the same network of organisations along with civil society members also came together at Nehru Place to protest India&#x27;s trade of arms and labour with Israel, triggering mob violence from an enraged public overrun with national sentiment. Then too, the message echoing in the silent gathering&#x27;s placards and posters was one of contempt for India and Israel&#x27;s economic ties.</p><p data-role="testimony">&quot;There was a time when India stood with Palestinians; it stood for Palestine&#x27;s freedom,&quot; said activist Paran Amitava after the forced dispersal of protestors at the Nehru Place event. &quot;In today&#x27;s date, the Indian government has joined hands with Adani to sell Israel arms and ammunition—this is how they make money,&quot; she said.</p><p data-role="resolution">&quot;When it comes to matters of money, there is no room for solidarity.&quot;</p></div></div><div class="bs-scroll-secondary"></div></div><section class="bs-sheet bs-scroll-back"><div class="bs-backcover"><img class="bs-backcover-art" src="data:image/png;base64,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" alt=""><div class="bs-backcover-plate"></div><div class="bs-backcover-mono"><img src="data:image/png;base64,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" alt="V&amp;E"></div><div class="bs-backcover-qr-wrap"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANgAAADYAQAAAAChWxBAAAABIUlEQVR4nN2YzQrDMAyDpbD3f2UN/7VlsMO6HTKl0Ib44g/Zrh0Kb9fC/9seYG1EgQXLPvHgQ0IRoAQmp+rEhA8sxqBLPPTJTn6ur21ixqU6Orf1866NIZn29/Pz+FTulIATqrv5uW7aMIrp8ljVT/UuK0ulIOCknw7C1k71tdCP9Tuof/v5RYD75J9CxUNJRSGVh35oqi6dQwiX+Fzdb/KShig1t/Pzpo0dmZl5nEaNHvm34lU4uvRppE9/rRCuRoburRm9jAcfMjanuuBSYOTTvyhenXnHHvDgY20Cc+Z3FalL/mHuJCrtMCHqMh/xZAw87ujn+olNZ5EhbfSrNfcuR4Ntw6fXUQJ1C2PCx9plF9pDEuIyFDbz35u1k593bU97O5F5nOMvdQAAAABJRU5ErkJggg==" alt="Read online QR"> <div class="bs-backcover-qr-label">Read January 2026 online</div></div><div class="bs-backcover-foot">The Voice Express · January 2026</div></div></section><div class="bs-scroll-foot">The Voice Express &middot; January 2026 &middot; End of issue</div>
+</body></html>

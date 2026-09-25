@@ -1,0 +1,10 @@
+{
+  "db_path": "../voice_express.db",
+  "port": 8790,
+  "tools": {
+    "desk_editor": "http://localhost:8787",
+    "social_manager": "http://localhost:8788",
+    "columnroom": "http://localhost:8789",
+    "dtp": "http://localhost:8797"
+  }
+}

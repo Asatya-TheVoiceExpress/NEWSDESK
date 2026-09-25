@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="The Voice Express — Truth Takes Time. Independent journalism, in every form.">
+<title>The Voice Express</title>
+<link rel="icon" type="image/png" href="tve_logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0a0a;--paper:#fafaf8;
+  --g100:#f2f2f0;--g200:#e5e5e3;--g300:#d0d0ce;--g400:#a8a8a6;--g500:#7a7a78;--g600:#555553;
+  --fh:'Playfair Display',Georgia,serif;
+  --fb:'EB Garamond',Garamond,Georgia,serif;
+  --fm:'Courier Prime','Courier New',monospace;
+  --rule:1px solid var(--ink);
+}
+@media (prefers-color-scheme:dark){
+  :root{--ink:#e8e8e6;--paper:#141414;--g100:#1e1e1c;--g200:#282826;--g300:#3c3c3a;--g400:#585856;--g500:#7a7a78;--g600:#9e9e9c;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--fb);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+}
+.wrap{width:100%;max-width:840px;padding:3rem 1.5rem 4rem;margin:0 auto}
+header{text-align:center;border-bottom:3px solid var(--ink);padding-bottom:1.4rem;margin-bottom:2.6rem}
+.masthead{font-family:var(--fh);font-weight:900;font-size:clamp(2.4rem,7vw,4.2rem);letter-spacing:.01em;margin:0;line-height:1}
+.tagline{font-family:var(--fm);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--g500);margin-top:.7rem}
+.est{font-family:var(--fm);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--g400);margin-top:.5rem}
+
+.cards{display:grid;grid-template-columns:1fr;gap:1.1rem}
+@media (min-width:620px){.cards{grid-template-columns:1fr 1fr}}
+.card{
+  border:var(--rule);padding:1.6rem 1.5rem;text-decoration:none;color:inherit;
+  display:flex;flex-direction:column;gap:.55rem;transition:box-shadow .15s ease,transform .15s ease;
+  background:var(--paper);
+}
+.card:not(.disabled):hover{box-shadow:4px 4px 0 var(--ink);transform:translate(-2px,-2px)}
+.card.wide{grid-column:1 / -1}
+.card-kicker{font-family:var(--fm);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--g500)}
+.card-title{font-family:var(--fh);font-weight:700;font-size:1.5rem}
+.card-desc{font-family:var(--fb);font-size:.95rem;color:var(--g600);line-height:1.45}
+.card-cta{font-family:var(--fm);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;margin-top:.3rem}
+.card.disabled{opacity:.55;cursor:default}
+.card.disabled .card-cta{color:var(--g400)}
+
+footer{margin-top:3rem;text-align:center;font-family:var(--fm);font-size:.62rem;letter-spacing:.08em;color:var(--g500)}
+footer a{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="masthead">The Voice Express</h1>
+    <div class="tagline">The Truth Takes Time</div>
+    <div class="est">Est. 2022 &middot; New Delhi, India &middot; Independent</div>
+  </header>
+
+  <div class="cards">
+    <a class="card" href="https://emag.thevoiceexpress.in/">
+      <div class="card-kicker">Read</div>
+      <div class="card-title">The Emag</div>
+      <div class="card-desc">Every article, section, and search — a full static mirror of the paper. Nothing to install, nothing to log into.</div>
+      <div class="card-cta">Open the Emag &rarr;</div>
+    </a>
+
+    <a class="card" href="https://newsstand.thevoiceexpress.in/">
+      <div class="card-kicker">Newsstand</div>
+      <div class="card-title">The Stand</div>
+      <div class="card-desc">Gazettes, broadsheets, and issues — read online or download, pay what you feel is fair.</div>
+      <div class="card-cta">Browse the Stand &rarr;</div>
+    </a>
+
+    <div class="card wide disabled">
+      <div class="card-kicker">Coming Soon</div>
+      <div class="card-title">The Newsdesk</div>
+      <div class="card-desc">The full platform — writing, editing, and publishing, all in one place.</div>
+      <div class="card-cta">In the works</div>
+    </div>
+  </div>
+
+  <footer>
+    thevoiceexpress.in &middot; contact.thevoiceexpress@gmail.com
+  </footer>
+</div>
+</body>
+</html>

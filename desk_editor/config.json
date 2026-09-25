@@ -1,0 +1,12 @@
+{
+  "db_path": "../voice_express.db",
+  "media_path": "../static/uploads",
+  "publications_path": "../static/publications",
+  "app_css": "../static/css/app.css",
+  "fonts_dir": "../fonts",
+  "logo": "../logo-ve.png",
+  "previews_dir": "previews",
+  "thumbs_dir": "thumbs",
+  "default_author_id": null,
+  "port": 8787
+}

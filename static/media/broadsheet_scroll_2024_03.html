@@ -1,0 +1,504 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>The Voice Express — March 2024 — Broadsheet (Scroll)</title>
+<style>
+:root{--ink:#16140f;--paper:#f4efe2;--g:#5b5547;--rule:2px solid #16140f;--thin:1px solid #8a8273;--accent:#7a2018}
+*{box-sizing:border-box}
+@page{size:420mm 297mm;margin:11mm 12mm}
+html,body{margin:0;background:transparent;font-family:"Georgia","Times New Roman",serif;color:var(--ink)}
+.bs-sheet{position:relative;width:100%;max-width:396mm;margin:0 auto;padding:0 0 28mm 0;
+  background-color:var(--paper);
+  /* Real newsprint texture, not a flat fill: a tiled SVG fractal-noise
+     grain (paper fiber) plus a soft radial vignette darkening the corners
+     (real broadsheet stock isn't lit evenly edge-to-edge, and a printed
+     sheet's outer edge always reads a touch duller than its center) --
+     both subtle enough to stay invisible at reading distance/zoom, only
+     registering as "this isn't a flat digital rectangle" the way the
+     rest of this module's ink-rule/frame work already aims for. */
+  background-image:
+    radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(22,20,15,.05) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.086  0 0 0 0 0.078  0 0 0 0 0.059  0 0 0 0.045 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-repeat:no-repeat,repeat;
+  background-size:100% 100%,120px 120px;
+  page-break-after:always;min-height:297mm}
+.bs-sheet:last-child{page-break-after:auto}
+/* One real STORY MODULE (see _bs_module_html): a headline banner across
+   the module's full width, with that story's own body flowing beneath it
+   through real CSS columns with rules between -- the actual structural
+   unit a newspaper page is built from. No box around the module itself:
+   the heavy rule above the headline and the column rules inside are what
+   separate one story from the next, exactly like newsprint, instead of
+   every piece carrying its own outlined rectangle. */
+.bs-module{border-top:3px solid var(--ink);padding:1.6mm 0 0;box-sizing:border-box}
+.bs-mod-head{border-bottom:1px solid var(--ink);padding-bottom:1.2mm;margin-bottom:1.6mm}
+.bs-mod-head .bs-hl{font-size:1.5rem;line-height:1.06}
+.bs-mod-head .bs-deck{font-size:.8rem;margin:.2rem 0 .1rem}
+/* `column-fill:balance` (NOT `auto`) is load-bearing: with `auto` the
+   browser fills column 1 to its full height before starting column 2, so
+   a module whose height comes FROM that same layout just stacks all its
+   text in the first column and leaves the rest of its width blank --
+   exactly the bug the first module-packer render showed. Balancing
+   spreads the real content evenly across every column of the module, so
+   a 3- or 4-column story actually reads across its full width. */
+.bs-mod-body{column-gap:6mm;column-rule:1px solid #d4cfc0;column-fill:balance}
+.bs-mod-body > *{break-inside:avoid-column}
+.bs-mod-body p{margin:0 0 .18rem;text-indent:1.05em;text-align:justify;hyphens:auto;
+  font-size:.7rem;line-height:1.32;
+  /* Real newsprint hyphenation limits -- without these, `hyphens:auto`
+     at this narrow a measure happily breaks two-letter fragments off a
+     word and stacks hyphens on consecutive lines, which reads as broken
+     rather than typeset. */
+  -webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;
+  hyphenate-limit-chars:6 3 3;hyphenate-limit-lines:2}
+.bs-mod-body p:first-of-type{text-indent:0}
+.bs-mod-body .bs-quote{border-left:3px solid var(--accent);padding:.1rem 0 .1rem 2mm;margin:.3rem 0;
+  font-family:"Playfair Display","Georgia",serif;font-style:italic;font-size:.86rem;line-height:1.26;
+  text-indent:0;font-weight:600}
+.bs-mod-body .bs-sub{font-size:.86rem;margin:.45rem 0 .2rem;text-indent:0}
+/* Photos SPAN the whole module rather than being trapped inside one
+   ~48mm text column. A figure sitting in the normal column flow is
+   limited to a single column's width, which at this (deliberately dense)
+   measure renders press photography as an unreadable thumbnail --
+   `column-span:all` runs it across the story's full width instead, the
+   real newspaper treatment, and the text simply resumes in columns
+   underneath. Heights are capped so a tall portrait can't swallow the
+   whole module (the long-standing `width:100%`-with-no-height-constraint
+   hazard this file already documents elsewhere). */
+.bs-mod-body .bs-fig,.bs-mod-body .bs-strip{column-span:all;margin:.5rem 0 .6rem}
+.bs-mod-body .bs-fig img{max-height:56mm;object-fit:contain;object-position:center}
+.bs-mod-body .bs-fig figcaption{font-size:.62rem}
+.bs-mod-body .bs-strip img{max-height:44mm;object-fit:cover}
+/* A story carrying several figures shouldn't turn into a photo album:
+   past the first two, each additional one steps down further, so a
+   photo-heavy article still leads with real imagery but its prose keeps
+   the majority of the module (the 82mm/64mm caps this replaces let two
+   stacked images swallow an entire story). */
+.bs-mod-body .bs-fig:nth-of-type(n+3) img{max-height:38mm}
+/* A photo-group spanning the full module can afford real panel sizes --
+   its own inner column-count no longer has to squeeze into one text
+   column, so widen the grid tracks instead of multiplying tiny ones. */
+.bs-mod-body .bs-strip[data-type="dump"],.bs-mod-body .bs-strip[data-type="grid"],
+.bs-mod-body .bs-strip[data-type="collage"]{column-count:3;column-gap:2mm}
+.bs-mod-body .bs-strip[data-type="crowd"]{column-count:4;column-gap:1.6mm}
+.bs-col-rule{position:absolute;width:1px;background:#d4cfc0;pointer-events:none;z-index:0}
+.bs-side-label{position:absolute;left:0;top:0;height:100%;width:8mm;display:flex;
+  align-items:center;justify-content:center;pointer-events:none;z-index:1;
+  /* Fixed real mm width (was `2.0em`, a font-relative unit that could
+     render wider than the page's own 12mm side margin depending on
+     rotated-glyph metrics -- found bleeding into the first real column's
+     body text on a real edition). `overflow:hidden` is the hard
+     backstop: whatever the rotated span's true footprint turns out to
+     be, it can never visually escape this reserved strip and encroach
+     on real content again. */
+  overflow:hidden}
+.bs-side-label span{display:inline-block;font-family:var(--fm,Georgia,serif);font-size:.6rem;
+  font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);
+  border-top:1px solid var(--accent);border-bottom:1px solid var(--accent);padding:.25em .1em;
+  white-space:nowrap;transform:rotate(-90deg);transform-origin:center center}
+.bs-fig-feat img{width:100%;max-height:48mm;object-fit:contain;background:var(--paper)}
+@import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
+.bs-mast{text-align:center;margin-bottom:0.7rem;padding:0 0 0.5rem}
+.bs-mast-rule{height:0;margin:0;border-top:3px double var(--ink)}
+.bs-mast-rule-top{margin-bottom:.5rem}
+.bs-mast-rule-mid{border-top:1px solid var(--ink);margin:.4rem 0}
+.bs-mast-rule2{margin-top:.45rem}
+.bs-mast-name{font-family:"Pirata One","Playfair Display","Old English Text MT","Georgia",serif;
+  font-weight:400;font-size:5.6rem;letter-spacing:.5px;line-height:.9;margin:0;text-align:center;
+  text-rendering:optimizeLegibility;text-shadow:0.35px 0 0 var(--ink)}
+.bs-mast-tag{text-align:center;font-style:italic;font-size:1.0rem;color:var(--g);letter-spacing:.03em;margin-top:.15rem}
+.bs-mast-note{text-align:center;font-size:.68rem;font-style:italic;color:var(--accent);margin-top:.25rem}
+.bs-mast-byline{display:flex;justify-content:space-between;align-items:baseline;margin-top:.5rem;
+  font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g)}
+.bs-mast-seg-c{font-weight:700;color:var(--ink)}
+.bs-mast-seg-r{text-align:right}
+.bs-standfirst{border-top:1px solid #d4cfc0;border-bottom:1px solid #d4cfc0;padding:0.6rem 0;margin:0.8rem 0 1rem;
+  display:flex;gap:1rem;align-items:baseline}
+.bs-sf-lbl{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;white-space:nowrap;color:var(--accent)}
+.bs-standfirst p{margin:0;font-style:italic;font-size:.90rem;line-height:1.45;color:#322d22}
+.bs-runhead{display:flex;justify-content:space-between;font-size:.60rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--g);border-bottom:1px solid #d4cfc0;padding-bottom:.4rem;margin-bottom:0.8rem}
+.bs-covernote{font-style:italic;font-size:.76rem;color:var(--accent);text-align:center;margin:0.4rem 0 0.6rem}
+.bs-index{border-top:1px solid #d4cfc0;border-bottom:1px solid #d4cfc0;padding:0.5rem 0;margin:0.8rem 0 1rem;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0 1.2rem;font-size:.66rem;min-width:0;overflow:hidden}
+.bs-index .bs-sf-lbl{grid-column:1/-1;display:block;margin-bottom:.4rem;color:var(--accent)}
+/* min-width:0 on both the grid item and the flex item is required for
+   text-overflow:ellipsis to actually engage -- flex/grid children default to
+   min-width:auto, which keeps them at their content's natural width no
+   matter what overflow/white-space says, so without this the whole row
+   silently pushed past the page edge on both sides instead of eliding (found
+   via a live rendered-page review, not a guess). */
+.bs-idx-row{display:flex;justify-content:space-between;gap:.5rem;border-bottom:1px dotted #b3ab98;padding:.15rem 0;
+  page-break-inside:avoid;min-width:0}
+.bs-idx-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.bs-idx-p{color:var(--accent);font-weight:700;flex:0 0 auto}
+.bs-banner{border-bottom:2px solid #d4cfc0;padding-bottom:0.8rem;margin-bottom:1rem;page-break-inside:avoid}
+.bs-banner-hl{font-family:"Playfair Display","Georgia",serif;font-weight:900;font-size:4.0rem;
+  line-height:0.98;letter-spacing:-.8px;margin:0 0 0.4rem;text-align:center;
+  text-rendering:optimizeLegibility;text-shadow:0.3px 0 0 var(--ink)}
+.bs-banner-deck{font-style:italic;font-size:1.2rem;line-height:1.35;text-align:center;color:#352f24;
+  max-width:80%;margin:0.4rem auto 0.6rem}
+.bs-banner .bs-kicker{text-align:center;font-size:.68rem}
+.bs-banner .bs-byline{text-align:center}
+.bs-banner-hero{margin:0.8rem 0 0}
+.bs-banner-hero img{width:100%;max-height:180mm;object-fit:contain;background:var(--paper);display:block;border:1px solid var(--g)}
+.bs-grid{column-count:unset;display:grid;grid-template-columns:repeat(3,1fr);gap:0 8mm;text-align:justify;hyphens:auto}
+.bs-col{padding:0;border-right:1px solid #d4cfc0;break-inside:avoid}
+.bs-col:last-child{border-right:none}
+.bs-col > *{padding:0 2mm}
+/* Ornamental frame for the wave-packer's own standalone pieces (see
+   _bs_wave_pack_pages) -- unlike '.bs-col's plain border-right (meant for
+   siblings inside one shared multi-column grid, .bs-grid), each packed
+   piece here is independently positioned with nothing beside it, so a
+   full box border reads correctly. Double-rule motif matches the
+   masthead's own '.bs-mast-rule' treatment elsewhere in this stylesheet,
+   not a new decorative idea. `border-right:none` overrides '.bs-col's own
+   rule so the frame isn't cut short on one edge.*/
+.bs-framed{border-top:3px solid var(--ink);border-bottom:1px solid var(--ink);
+  border-left:1px solid var(--ink);border-right:2px solid var(--ink);padding:3mm 4mm;
+  box-sizing:border-box;position:relative;
+  /* A faint offset "ghost" shadow -- real cut/pasted clippings on a
+     paste-up board (the literal origin of "cut and paste" layout) sit a
+     hair proud of the page, catching a soft shadow; a flat outlined box
+     reads as a digital rectangle. Kept very low-contrast/blurred so it
+     stays a felt detail, not a UI card shadow. */
+  box-shadow:1.1mm 1.1mm 1.8mm rgba(22,20,15,.12)}
+.bs-framed > *{padding:0}
+/* Corner brackets -- two rule segments of DELIBERATELY different
+   thickness meeting at opposite corners (a thick rule one way, a thin
+   rule the other), pure geometry -- no glyphs/dingbats. Absolutely
+   positioned ::before/::after, so this never participates in normal flow
+   and can't perturb the real Playwright measurement every piece's real
+   w/h was fit from (measuring happens against this exact same
+   '.bs-framed' class already, see _bs_natural_size's own comment on why
+   that measure/render consistency matters). */
+.bs-framed::before,.bs-framed::after{content:"";position:absolute;width:7mm;height:7mm;pointer-events:none}
+.bs-framed::before{top:-2px;left:-2px;border-top:3px solid var(--accent);border-left:1px solid var(--accent)}
+.bs-framed::after{bottom:-2px;right:-2px;border-bottom:3px solid var(--accent);border-right:1px solid var(--accent)}
+/* Plain running-text pieces (ordinary body paragraphs, not a headline/
+   photo/quote/squared feature) deliberately skip the full ornamental box:
+   a page where EVERY single packed paragraph gets its own thick-ruled
+   card reads as a wall of index cards, not a newspaper page. A single
+   top rule is enough separation between neighbouring pieces while letting
+   plain text read as continuous column copy. */
+.bs-plain{border-top:1px solid #d4cfc0;border-right:3px double #c9c2ac;padding:2.5mm 4mm 1mm 1.5mm;
+  box-sizing:border-box}
+.bs-plain > *{padding:0}
+/* Third visual tier, between '.bs-framed' (heavy double-rule, its own
+   distinct unit) and '.bs-plain' (bare running copy): a real newspaper
+   boxes short 'in brief' filler items with a light single rule, not the
+   same ornamental weight as a feature/photo. See _bs_wave_pack_pages'
+   role -> frame_cls lookup. */
+.bs-boxed{border:1px solid var(--ink);padding:2mm 3mm;box-sizing:border-box;
+  box-shadow:0.8mm 0.8mm 1.2mm rgba(22,20,15,.08)}
+.bs-boxed > *{padding:0}
+/* Real pull-quote treatment for the 'quote' role -- no surrounding box
+   at all (was '.bs-framed', the same heavy double-rule frame a headline
+   or photo gets), just a thick accent rule down the left edge and
+   large-scale italic serif type, the actual real-newspaper convention
+   for a pulled quote. Kept visually distinct from every boxed role so
+   not every piece on the page reads as an identical bordered rectangle. */
+.bs-pullquote{border-left:4px solid var(--accent);padding:1mm 0 1mm 4mm;box-sizing:border-box;
+  background:rgba(122,32,24,.035)}
+.bs-pullquote > *{padding:0}
+.bs-pullquote .bs-quote{border-left:none;padding-left:0;font-size:1.15rem;line-height:1.32;
+  font-family:"Playfair Display","Georgia",serif;font-weight:600}
+.bs-pullquote .bs-q-who{font-size:.62rem}
+/* Front-page organic filler pieces (see _bs_front_extras) -- puzzle/logo/
+   QR/links/month-year get the same '.bs-framed' box treatment as real
+   content pieces (packed the same way, into the same kind of guillotine
+   free space); rotated quotes and the wordmark accents are pure "text
+   art", deliberately unboxed. */
+.bs-front-puzzle,.bs-front-logo,.bs-front-qr,.bs-front-links,.bs-front-monthyear{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;height:100%;text-align:center}
+.bs-front-puzzle .bsk-grid{width:88%}
+.bs-front-puzzle-cap{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--g);margin-top:.4rem}
+.bs-front-logo img{max-width:80%;max-height:80%;object-fit:contain}
+.bs-front-monthyear{font-family:"Playfair Display","Georgia",serif;font-weight:900;
+  font-size:1.6rem;letter-spacing:.04em;line-height:1.05}
+.bs-front-qr img{width:60%;height:auto}
+.bs-front-qr-label{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g);margin-top:.3rem}
+.bs-front-links{font-size:.68rem;line-height:1.9;color:var(--g)}
+.bs-front-quote{font-family:"Playfair Display","Georgia",serif;font-style:italic;font-weight:700;
+  font-size:.86rem;line-height:1.3;color:var(--accent);opacity:.55;text-align:center}
+.bs-front-wordmark{font-family:"Pirata One","Playfair Display",serif;font-size:1.1rem;
+  color:var(--ink);opacity:.16;text-align:center;letter-spacing:.03em;white-space:nowrap}
+.bs-front-haiku{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;height:100%;text-align:center;font-family:"Playfair Display","Georgia",serif;
+  font-style:italic;font-size:.82rem;line-height:1.5;color:var(--ink)}
+.bs-front-haiku-cap{font-family:"Georgia",serif;font-style:normal;font-size:.58rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--g);margin-top:.4rem}
+/* Front-page hero boxes (see create_broadsheet_project's front-page
+   layout): the wide centre 'bs-lead-box' and narrow flanking
+   'bs-side-box'es are both real 'bs_column' blocks, just at varied real
+   widths instead of a uniform grid -- see the long citation comment above
+   `front_continuations` in create_broadsheet_project for the real Scribus
+   template this box-width pattern was cross-checked against. */
+.bs-lead-box{padding:0 4mm}
+.bs-lead-box .bs-head-lead{border-bottom:none;padding-bottom:0}
+.bs-lead-box .bs-head-lead .bs-hl{font-size:2.9rem}
+.bs-lead-hero{margin:0 0 .6rem}
+.bs-lead-hero img{width:100%;max-height:150mm;object-fit:cover;display:block;border:1px solid var(--g)}
+.bs-lead-hero figcaption{font-size:.62rem;color:#5a5247;padding:.25rem 0;border-bottom:1px solid #d4cfc0}
+.bs-lead-body{column-count:2;column-gap:8mm;column-rule:1px solid #d4cfc0;text-align:justify;hyphens:auto}
+.bs-lead-body p{margin:0;font-size:.83rem;line-height:1.44;text-indent:1.05em;orphans:2;widows:2}
+.bs-lead-body p[data-role="lede"]{text-indent:0}
+.bs-side-box{padding:0 3mm;border-left:1px solid #d4cfc0;border-right:1px solid #d4cfc0}
+.bs-side-box .bs-hl{font-size:1.3rem}
+.bs-side-box .bs-deck{font-style:italic}
+.bs-side-box p{font-size:.79rem}
+.bs-head{margin:0.2rem 0 0.4rem;break-inside:avoid;orphans:2;widows:2}
+.bs-kicker{font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--accent);
+  margin-bottom:.2rem;display:flex;align-items:center;gap:.4em}
+.bs-kicker::before{content:"";display:inline-block;width:3px;height:.85em;background:var(--accent);flex:0 0 auto}
+.bs-hl{font-family:"Playfair Display","Georgia",serif;font-weight:800;line-height:1.04;margin:0 0 .25rem;
+  font-size:1.15rem;text-rendering:optimizeLegibility;
+  /* A hairline dark text-shadow at the SAME color as the ink, offset a
+     fraction of a pixel -- reads as a touch of real letterpress ink
+     spread on a large serif headline rather than a flat vector fill,
+     without softening the glyph edges enough to look blurry at normal
+     zoom (kept off small/running text below, where it'd just read as
+     mud). */
+  text-shadow:0.25px 0 0 var(--ink)}
+.bs-head-lead .bs-hl{font-size:2.4rem;line-height:1.0;letter-spacing:-.6px}
+.bs-head-lead{border-bottom:2px solid #d4cfc0;padding-bottom:0.4rem;margin-bottom:0.6rem}
+.bs-deck{font-style:italic;font-size:.84rem;line-height:1.4;color:#352f24;margin:.15rem 0 .25rem}
+.bs-head-lead .bs-deck{font-size:1.0rem;line-height:1.42}
+.bs-byline{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--g);margin-bottom:.35rem}
+.bs-col p{margin:0;font-size:.72rem;line-height:1.28;text-indent:1.05em;orphans:2;widows:2;
+  text-align:justify;hyphens:auto}
+.bs-col p[data-role="lede"]{text-indent:0;font-size:.77rem;line-height:1.26}
+/* Real column-width-driven type scale (see the block-emission loop's
+   span_cls, from the same real `span` _bs_natural_size already sized
+   the piece's WIDTH from) -- a real newspaper tightens leading and
+   trims size a touch in a narrow 1-column brief, and opens both up in a
+   wide 3-4 column feature, rather than every column running the same
+   fixed size regardless of measure. Baseline sizes dropped overall
+   (.81->.72rem, 1.42->1.28 leading) to match a real dense newsprint
+   column measure now that `_bs_col_count` runs narrower (~48mm)
+   columns -- the old size read fine at 65mm but went loose/gappy at
+   this narrower width, undermining the "dense newsprint" read the
+   narrower grid was meant to create. Justified + `hyphens:auto` also
+   added here -- real newsprint text is justified with hyphenation to
+   keep a narrow column's rag from getting ugly; ragged-right at this
+   measure looked distinctly un-newspaper. Defined here (ahead of
+   .bs-tmpl-feature/.bs-tmpl-brief below) so their own already-tuned
+   scale still wins by source order on an equal-specificity selector. */
+.bs-col.bs-span-1 p{font-size:.68rem;line-height:1.24}
+.bs-col.bs-span-1 .bs-hl{font-size:.92rem}
+.bs-col.bs-span-3 p,.bs-col.bs-span-4 p{font-size:.78rem;line-height:1.34}
+.bs-col.bs-span-3 .bs-hl,.bs-col.bs-span-4 .bs-hl{font-size:1.2rem}
+.bs-sub{font-family:"Playfair Display","Georgia",serif;font-weight:700;font-size:.98rem;margin:.55rem 0 .25rem;text-indent:0}
+.bs-quote{margin:.5rem 0;padding:.25rem 0 .25rem 0.6mm;border-left:3px solid var(--accent);
+  font-style:italic;font-size:.88rem;line-height:1.38;text-indent:0;page-break-inside:avoid}
+.bs-q-who{display:block;font-style:normal;font-size:.60rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g);margin-top:.3rem}
+.bs-list{margin:.4rem 0 .4rem 1.1rem;font-size:.79rem;line-height:1.38}
+.bs-fig{margin:.5rem 0;break-inside:avoid;page-break-inside:avoid}
+.bs-fig img{width:100%;display:block;border:1px solid var(--g);margin-bottom:.3rem}
+.bs-fig figcaption{font-size:.60rem;line-height:1.3;color:#5a5247;padding:.2rem 0;text-indent:0;border-bottom:1px solid #d4cfc0}
+/* real photo-group ("collage panel") print treatments, one per SEMANTIC.md
+   data-type, ported from the reader's .art-content .photo-group[data-type=
+   ...] rules (which already had these worked out) and re-themed onto the
+   broadsheet's own --ink/--paper/--accent vars -- kept as ONE atomic
+   fragment by _blocks()'s emit_group() instead of exploding into loose
+   bs-fig images, so a collage/sequence/comic actually reads as one designed
+   unit, matchable by the packer against a real wide/square rectangle. */
+.bs-strip{margin:.5rem 0;break-inside:avoid;page-break-inside:avoid}
+.bs-strip img{display:block;width:100%;height:auto;border:1px solid var(--g)}
+.bs-strip figure{margin:0}
+.bs-strip figcaption{font-size:.58rem;line-height:1.28;color:#5a5247;padding:.2rem 0;text-indent:0}
+.bs-strip[data-type="dump"],.bs-strip[data-type="grid"],.bs-strip[data-type="collage"]{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:.4rem}
+.bs-strip[data-type="crowd"]{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem}
+.bs-strip[data-type="sequence"]{display:block;counter-reset:bs-seq}
+.bs-strip[data-type="sequence"] figure{counter-increment:bs-seq;display:flex;align-items:center;
+  gap:.9rem;margin:0 0 .55rem}
+.bs-strip[data-type="sequence"] figure:last-child{margin-bottom:0}
+.bs-strip[data-type="sequence"] figure:nth-child(even){flex-direction:row-reverse}
+.bs-strip[data-type="sequence"] img{flex:0 0 54%;width:54%}
+.bs-strip[data-type="sequence"] figcaption{flex:1;border:none}
+.bs-strip[data-type="sequence"] figcaption::before{content:counter(bs-seq,decimal-leading-zero) " / ";
+  font-weight:700;color:var(--accent)}
+.bs-strip[data-type="comic"]{display:block;background:var(--ink);border:2px solid var(--ink);
+  padding:3px;counter-reset:bs-pan}
+.bs-strip[data-type="comic"] figure{background:var(--paper);margin:0 0 3px;counter-increment:bs-pan}
+.bs-strip[data-type="comic"] figure:last-child{margin-bottom:0}
+.bs-strip[data-type="comic"] figcaption{padding:.25rem .4rem;font-style:italic}
+.bs-strip[data-type="comic"] figcaption::before{content:counter(bs-pan) ". "; font-weight:700;
+  font-style:normal;color:var(--accent)}
+/* Column calendar-collage (see _bs_blast_columns) -- real column count set
+   inline per instance (daily/weekly/monthly/custom all share this one
+   grid base, just at a different cell count), so data-type isn't one of
+   the photo-group types above and needs its own base display:grid rule. */
+.bs-colcal{display:grid;gap:.3rem}
+.bs-colcal figcaption{text-align:center}
+.bs-colcal-empty{border:1px dashed #b3ab98;min-height:12mm;
+  background:repeating-linear-gradient(45deg,var(--paper),var(--paper) 4px,#e5ddc9 4px,#e5ddc9 5px)}
+.bs-colcal-text{border:1px solid var(--g);padding:.3rem;font-size:.58rem;line-height:1.25;
+  display:flex;flex-direction:column;gap:.2rem;min-height:12mm}
+.bs-colcal-text span{font-weight:700;color:var(--accent);font-size:.54rem;letter-spacing:.06em;text-transform:uppercase}
+/* ornamental vertical divider between packed pieces, up to half the page's
+   content height -- a real decorative rule, occasionally carrying a short
+   rotated pull-quote. The outer box gets a fixed real w/h and the rotated
+   text is a flex-centered child, same fix as the front-page bs-side-label's
+   own rotation (a transform:rotate anchored at the box's own left/top edge
+   swings half its footprint into negative-x/y and gets clipped -- centering
+   the rotation inside a correctly-sized box avoids that whole bug class). */
+.bs-divider{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--accent);
+  border-right:1px solid var(--accent)}
+.bs-divider-quote{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.bs-divider-quote span{display:inline-block;white-space:nowrap;transform:rotate(-90deg);
+  font-family:"Playfair Display","Georgia",serif;font-style:italic;font-size:.82rem;
+  color:var(--accent);letter-spacing:.02em}
+/* A quote-less divider gets a second inner vertical rule (see
+   render_block_html's bs_divider case for the real per-instance
+   thickness/height, seeded off the block's own id) at a DIFFERENT
+   thickness than the divider's own 1px flanking rules -- pure rule
+   geometry, no glyphs. */
+.bs-divider-plain{position:relative}
+/* brief-tier pieces (small packed rectangles) -- compact type, no drop cap,
+   the density the old fixed 6-box 'briefs' grid was going for, now applied
+   per-piece by real packed size instead of only in that one discarded
+   template. */
+.bs-tmpl-brief .bs-col p,.bs-col.bs-tmpl-brief p{font-size:.70rem;line-height:1.3}
+.bs-tmpl-brief .bs-hl,.bs-col.bs-tmpl-brief .bs-hl{font-size:.92rem}
+.bs-tmpl-brief .bs-kicker,.bs-col.bs-tmpl-brief .bs-kicker{font-size:.5rem}
+.bs-tmpl-brief .bs-quote,.bs-col.bs-tmpl-brief .bs-quote{font-size:.74rem;padding-left:.4rem}
+.bs-hero{margin:0 0 .5rem}
+.bs-hero img{width:100%;display:block;border:1px solid var(--g)}
+.bs-jump{font-size:.60rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+  padding:.3rem 0;border-top:1px solid var(--g);margin-top:.4rem;text-indent:0;color:var(--accent)}
+.bs-jump-from{border-top:none;border-bottom:1px solid var(--g);margin:0 0 .4rem;color:var(--ink)}
+.bs-jump-from em{font-style:italic;text-transform:none;letter-spacing:0}
+.bs-foot{position:absolute;left:12mm;right:12mm;bottom:6mm;display:flex;justify-content:space-between;
+  font-size:.58rem;letter-spacing:.10em;text-transform:uppercase;color:var(--g);border-top:2px solid #d4cfc0;padding-top:.5rem}
+.bs-foot::before{content:"";position:absolute;top:-5px;left:50%;transform:translateX(-50%);
+  width:3px;height:10px;background:var(--accent)}
+.bs-section-head{border-bottom:3px double var(--ink);margin-bottom:1rem;padding-bottom:0.5rem;page-break-inside:avoid}
+.bs-section-head h2{font-family:"Playfair Display","Georgia",serif;font-weight:900;font-size:2.3rem;margin:0;font-variant:small-caps}
+.bs-section-sub{font-style:italic;color:var(--g);font-size:.85rem}
+.bs-colcards{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}
+.bs-colcard{border:1px solid #d4cfc0;padding:0.8rem;page-break-inside:avoid}
+.bs-colcard-img{height:125px;overflow:hidden;border:1px solid var(--g);margin-bottom:.5rem;background:var(--paper);
+  display:flex;align-items:center;justify-content:center}
+.bs-colcard-img img{width:100%;height:100%;object-fit:contain}
+.bs-colcard-kick{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:#7a2018;font-weight:700;margin-bottom:.15rem}
+.bs-colcard-title{font-family:"Playfair Display",serif;font-weight:700;font-size:1.05rem;line-height:1.15;margin:0.1rem 0}
+.bs-colcard-sub{font-style:italic;font-size:.80rem;color:#352f24;margin:.3rem 0}
+.bs-colcard-date{font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;color:var(--g);margin-top:.4rem}
+.bs-backgrid{display:grid;grid-template-columns:1fr 1fr;gap:10mm;align-items:start}
+.bs-puzzle{text-align:center;page-break-inside:avoid}
+.bsk-grid{display:grid;grid-template-columns:repeat(9,1fr);width:75%;margin:0 auto;border:2.5px solid var(--ink)}
+.bsk-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:1px solid #b3ab98;
+  font-size:1.05rem;font-weight:600}
+.bsk-rb{border-right:2px solid var(--ink)}
+.bsk-bb{border-bottom:2px solid var(--ink)}
+.bsw-grid{display:grid;width:88%;margin:0 auto;border:2px solid var(--ink)}
+.bsw-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:.5px solid #b3ab98;
+  font-size:.62rem;font-weight:600;letter-spacing:.02em}
+.bsw-words{margin-top:.4rem;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:var(--g);
+  display:flex;flex-wrap:wrap;gap:.5em;justify-content:center}
+.bsc-grid{display:flex;flex-direction:column;gap:5px;align-items:center}
+.bsc-row{display:flex;gap:2px}
+.bsc-cell{width:1.05em;height:1.4em;border-bottom:1px solid var(--ink);display:flex;align-items:flex-end;
+  justify-content:center;font-size:.6rem;font-weight:600;padding-bottom:1px}
+.bsc-gap{width:.6em}
+.bs-puzzle-cap{font-style:italic;color:var(--g);margin-top:.8rem;font-size:.80rem;line-height:1.35}
+.bs-supp-head{font-family:"Playfair Display",serif;font-weight:700;font-size:1.25rem;margin-bottom:0.8rem;border-bottom:1px solid #d4cfc0;padding-bottom:0.4rem}
+.bs-supp{display:grid;grid-template-columns:68px 1fr;gap:.7rem;align-items:flex-start;margin-bottom:0.9rem;page-break-inside:avoid}
+.bs-qr{width:68px;height:68px;flex-shrink:0}
+.bs-qr-x{display:flex;align-items:center;justify-content:center;border:1px solid var(--g);color:var(--g);width:68px;height:68px;font-size:.65rem}
+.bs-supp-l{font-weight:700;font-size:.88rem;line-height:1.2}
+.bs-supp-n{grid-column:2;font-size:.70rem;color:#5a5247;line-height:1.35}
+.bs-supp-wrap{}
+.bs-colophon{grid-column:1/-1;margin-top:1.2rem;border-top:2px solid #d4cfc0;padding-top:0.8rem;font-size:.70rem;line-height:1.42;color:#352f24}
+.bs-egg{user-select:none}
+.bs-credit{display:block;font-style:italic;opacity:.75;margin-top:.1rem}
+/* inner-page template variants (varied section-driven look, see
+   create_broadsheet_project's per-page dominant-section pick) */
+.bs-tmpl-feature .bs-grid{grid-template-columns:repeat(2,1fr)}
+.bs-tmpl-feature .bs-col p,.bs-col.bs-tmpl-feature p{font-size:.92rem;line-height:1.56}
+.bs-tmpl-feature .bs-col p[data-role="lede"]::first-letter,
+.bs-tmpl-feature .bs-col > p:first-of-type::first-letter,
+.bs-col.bs-tmpl-feature > p:first-of-type::first-letter{
+  float:left;font-family:"Playfair Display",serif;font-weight:900;font-size:3.1em;
+  line-height:.78;padding:.03em .06em 0 0;color:var(--accent)}
+.bs-tmpl-feature .bs-quote,.bs-col.bs-tmpl-feature .bs-quote{font-size:1.05rem;padding-left:1rem;border-left-width:4px}
+.bs-tmpl-feature .bs-hl,.bs-col.bs-tmpl-feature .bs-hl{font-size:1.4rem}
+/* `.bs-fig-feat` (a secondary/deferred story's own featured image, prepended
+   ahead of its body by _story()) was designed for the front page's narrow
+   ~91mm secondary-story columns, where a flat 48mm object-fit:contain cap
+   keeps one photo from dominating a short excerpt -- inside the new inner-
+   page 'feature' template's WIDER ~132mm text slots that same fixed cap
+   just letterboxes most real (portrait/square) photos into a small,
+   padded, off-centre-looking rectangle (found via a live visual review of
+   a real generated feature page). Scoped to `.bs-tmpl-feature` only, so the
+   front page's own untouched rendering of the same class is unaffected --
+   drop the cap so the photo scales to its natural aspect at full column
+   width instead, same as every other in-body figure on a feature page.*/
+.bs-col.bs-tmpl-feature .bs-fig-feat img{max-height:none}
+.bs-tmpl-label{font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  font-weight:700;margin-bottom:.5rem;grid-column:1/-1}
+/* full-bleed generative back cover */
+.bs-backcover{position:absolute;inset:0;overflow:hidden}
+.bs-backcover-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bs-backcover-plate{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(244,239,226,.0) 0%,rgba(244,239,226,.0) 45%,rgba(244,239,226,.55) 100%)}
+.bs-backcover-mono{position:absolute;top:50%;left:50%;transform:translate(-50%,-165mm);
+  width:34mm;height:34mm;border-radius:50%;background:var(--paper);border:2px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(244,239,226,.55)}
+.bs-backcover-mono img{width:70%;height:70%;object-fit:contain}
+.bs-backcover-mono-fallback{font-family:"Playfair Display",serif;font-weight:900;font-size:1.35rem;
+  letter-spacing:.02em;color:var(--ink)}
+.bs-backcover-qr-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;background:var(--paper);
+  border:2px solid var(--ink);padding:8mm 10mm 6mm;box-shadow:0 0 0 6px rgba(244,239,226,.55)}
+.bs-backcover-qr-wrap img{width:38mm;height:38mm}
+.bs-backcover-qr-label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--g);margin-top:.5rem}
+.bs-backcover-foot{position:absolute;left:0;right:0;bottom:34mm;text-align:center;
+  font-family:"Playfair Display",serif;font-size:.78rem;letter-spacing:.08em;color:var(--ink);
+  background:rgba(244,239,226,.72);padding:.3rem 0}
+@media print{body{margin:0;padding:0}}
+
+html{scroll-behavior:smooth}
+.bs-scroll-page{max-width:920px;margin:0 auto;padding:14mm 5mm 0;background:var(--paper)}
+/* .bs-mast-name's 5.2rem size was calibrated for the paginated page's real
+   ~1122px print width -- at this page's 920px max-width it wrapped to two
+   lines, which claimed most of the .bs-mast grid's width and squeezed the
+   two meta side-columns down to nothing, wrapping "FEBRUARY 2024"/"FREE --
+   SUPPORTED BY READERS" one word per line (found via a live browser check).
+   Scale the name down and keep the meta corners on one line each. */
+.bs-scroll-page .bs-mast-name{font-size:3.4rem}
+.bs-scroll-page .bs-mast-meta-l,.bs-scroll-page .bs-mast-meta-r{white-space:nowrap}
+.bs-scroll-page .bs-col{border-right:none;text-align:justify;hyphens:auto}
+.bs-scroll-page .bs-col > *{padding:0}
+.bs-scroll-lead{margin-top:1.1rem}
+.bs-scroll-secondary{margin:0}
+.bs-scroll-story{border-top:1px solid #d4cfc0;padding-top:1.1rem;margin-top:1.5rem}
+.bs-scroll-section{margin-bottom:0.5rem}
+.bs-scroll-index{grid-template-columns:1fr!important}
+.bs-scroll-index .bs-idx-row{flex-direction:row;align-items:baseline;gap:.8rem;white-space:normal}
+.bs-scroll-index .bs-idx-t{overflow:visible;text-overflow:clip;white-space:normal;color:var(--ink);
+  text-decoration:none;font-weight:600;flex:1 1 auto;min-width:0}
+.bs-scroll-index .bs-idx-t:hover{text-decoration:underline;color:var(--accent)}
+.bs-scroll-index .bs-idx-p{font-style:italic;font-weight:400;font-size:.6rem;letter-spacing:.08em;
+  text-transform:uppercase;flex:0 0 auto}
+.bs-scroll-back{margin:2.5rem auto 0;border-top:3px double var(--ink)}
+.bs-scroll-foot{text-align:center;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--g);padding:1.2rem 0 2rem}
+
+
+
+</style></head><body>
+<div class="bs-scroll-page"><header class="bs-mast">
+      <div class="bs-mast-rule bs-mast-rule-top"><span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(-7deg);display:inline-block;vertical-align:middle;white-space:nowrap">T</span></div>
+      <h1 class="bs-mast-name">The Voice Express</h1>
+      <div class="bs-mast-tag">The Truth Takes Time. <span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(-3deg);display:inline-block;vertical-align:middle;white-space:nowrap">U</span></div>
+      <div class="bs-mast-rule bs-mast-rule-mid"></div>
+      <div class="bs-mast-byline">
+        <span class="bs-mast-seg bs-mast-seg-l"><span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(5deg);display:inline-block;vertical-align:middle;white-space:nowrap">R</span> Vol. 13 &middot; New Delhi, India</span>
+        <span class="bs-mast-seg bs-mast-seg-c">March 2024</span>
+        <span class="bs-mast-seg bs-mast-seg-r">https://thevoiceexpress.in <span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(6deg);display:inline-block;vertical-align:middle;white-space:nowrap">T</span></span>
+      </div>
+      <div class="bs-mast-note">Free — Supported by readers</div>
+      <div class="bs-mast-rule bs-mast-rule2"><span class="bs-egg" aria-hidden="true" style="font-family:'Segoe Script','Brush Script MT',cursive;font-size:.72em;opacity:.34;color:var(--accent);transform:rotate(-5deg);display:inline-block;vertical-align:middle;white-space:nowrap">H</span></div>
+    </header><div class="bs-index bs-scroll-index"><span class="bs-sf-lbl">Inside This Issue</span><div class="bs-idx-row"><a class="bs-idx-t" href="#story-1-women-s-college-infirmary-charges-five-r">Women&#x27;s College Infirmary Charges Five Rupees Per Pad; Automatic Dispensers Charge Ten</a><span class="bs-idx-p">GENDER</span></div><div class="bs-idx-row"><a class="bs-idx-t" href="#story-2-i-am-the-head-of-my-household-he-is-the-">&#x27;I am the Head of my Household, He is the Head of India’s&#x27;: How Narendra Modi Earned the Favour of the Indian Middle Class</a><span class="bs-idx-p">POLITICS</span></div></div><div id="story-0-tokyo-thrift-embracing-the-strange-indiv" class="bs-scroll-lead"><div class="bs-banner"><div class="bs-kicker">CULTURE</div><h2 class="bs-banner-hl">Tokyo Thrift: Embracing the Strange Individualisation of the Sustainable Fashion Problem</h2><p class="bs-banner-deck">On why blaming the individual consumer for fast fashion&#x27;s damage is a structural trap — and what a more honest, less guilt-driven approach to sustainable choices might actually look like when the industry&#x27;s harms are genuinely systemic.</p><div class="bs-byline">By Dhairya Mishra</div></div><div class="bs-col bs-tmpl-feature"><p data-role="subtitle">On derationalising the guilt of individual consumption &amp; finding the middle ground between waiting around for big changes &amp; making small ones happen.</p><p data-role="lede">The ugly truth of fast fashion hides behind the glitter and glamour of the social media posts of a generation that does not wish to repeat an outfit. The OOTD (Outfit of the Day) is turning into DOTD (Disaster of the Decade) (I think I&#x27;m funny).</p><p>Imagine a little child toiling away in a factory for long hours under OSHA-certified &#x27;hazardous&#x27; conditions, in order to satisfy your need for quick &amp; cheap clothes. Consider the degree of damage caused when plastic waste from polyester factories enters the stomachs of threatened sea turtles. The impact that our choices in clothing have on the world around us is heartbreaking.</p><p>But they are choices , after all. We can always make different ones.</p><h3 class="bs-sub">First: Scrap the Guilt</h3><p>Our sociological collective has a problem with denialism, of shifting blame from all the places it need to be back to the unitary, powerless individual that doesn&#x27;t even have the authority to refuse it. And I do wish it goes to therapy sometime soon, for its sake if not mine, but it doesn&#x27;t change the fact that something is better than nothing, &amp; for the while that Gates &amp; Bezos refuse to do their parts, I would like to do something other than crying with my thumb up my ass.</p><p>So there&#x27;s the (multi)billion-dollar question: if it comes down to it, is there a way for us puny, insignificant, middle-class individuals to undo, even in fraction, some of the damage that&#x27;s being done to the bigger picture? You&#x27;re one microscopic cog in his catastrophic plan, designed &amp; directed by his red right hand, yada yada, understood. Is there a way, at least, for us to wash our hands clean?</p><h3 class="bs-sub">Rich Dad Poor Dad</h3><p>Of course, one of the larger ways in which a consumer can exercise supposed &#x27;agency&#x27; in the market, is his investment choices; &amp; the implication here should be clear enough: if you don&#x27;t have capital to invest, you don&#x27;t have capital to make ethical decisions. Beggars, choosers, &amp; all that jazz. So another requisite to understand here, as will be discussed below, is privilege. The obligation to make good choices as a consumer comes with what is first, the privilege to make choices at all. So it should be understood hereon that advice on where within the fashion sector you should invest &amp; on what is less Rich Dad Poor Dad finance guru talk &amp; more The Good Place perspectives on ethical consumption.</p><p data-role="note">https://www.instagram.com/reel/C4wHtaQyMOu/?igsh=NHl3MjB3NzA0ZjM5</p><h3 class="bs-sub">Bad Advice Can Be Good Advice</h3><p>Start by deciding on eco-friendly and sustainable materials that are less or just not harmful to the environment, such as organics like cotton, hemp, or recycled textiles. It may sound elementary, but sticking it out with the good old organics can be a deceivingly effective way to decrease one&#x27;s reliance on quick fashion. Think about how many t-shirts you&#x27;ve gone through in the last 5 years versus how many your parents did when you were growing up. How many did your grandparents? A good organic polyblend will last longer ; the point of buying a 1000-dollar jacket may not be a wise expenditure in any economic pool of thought outside of Shark Tank, but it can be to minimize the resources exhausted in the making of the alternative five.</p><p>Think about it - fast fashion is like fast food. It might be cheaper at a time, but absurdly more expensive &amp; wasteful put together as long-term expenditures, thereby trapping lower income groups in a vicious cycle that coerces them to take part in the very consumption patterns that drain them, both ethically &amp; financially.</p><p>If you&#x27;ve got the money, eat a salad, &amp; wear cotton, not only because you can, but because doing so is the only way to ensure you won&#x27;t need to down the line, either. There&#x27;s many a survivor of unHappy meals who will resent you a little less for using your privillege right.</p><blockquote class="bs-quote">Think about it, fast fashion is like fast food. It might be cheaper at a time, but absurdly more expensive &amp; wasteful put together during long-term expenditures, thereby trapping lower income groups in a vicious cycle that coerces them to take part in the very consumption patterns that drain them, both ethically &amp; financially. Dhairya Mishra, Uniting for a Sustainable Fashion Future: The Power of Collective Action<span class="bs-q-who">— Dhairya Mishra, Uniting for a Sustainable Fashion Future: The Power of Collective Action</span></blockquote><h3 class="bs-sub">Checking Your Investments: 5 Minute Crafts</h3><p>Thirty different audiences &amp; thirty different looks for them to look at. And if all that sounds like a bit much, throw it back in the bin.</p><p>If you get bored even thinking about it thirty times, you have no business taking it home.</p><h3 class="bs-sub">Werk, bitch.</h3><p>Not only should we choose our clothing carefully, but we need to style it well. Yes, you heard that right, all those Pinterest style videos pinned up on your autumn aesthetics board &amp; Instagram style reels clogging up your saves are weapons in your climate fashion war &amp; a soft cottage core girl will inherit the earth. Keep up.</p><p>Jokes aside, it&#x27;s important to remember that the villain is not fashion here. The villain is industry. The villain is mass production without regulation, &amp; mass consumption without thought. When the title says sustainable fashion, it does still mean fashion. Reread the first section again if you must, but don&#x27;t forget, you are not where the blame lies. If the world goes down in flames 5 decades from now it will not be because a young girl with seemingly vain tastes wanted to dress up cute.</p><p>Your joys are not killing the world. You can want to look good, &amp; you can want to spend time &amp; resources on doing so. But being thoughtful about techniques can help minimise the amount of resources that go to waste, &amp; the argument becomes simple: if your looks are entirely dependent on the money you spend on them, you&#x27;re not fashionable, you&#x27;re just rich.</p><p>A single article of clothing can be dressed in a variety of ways to produce various looks, which can help the garment last longer and decrease waste. The point is, you don&#x27;t have to look up a list of sustainable fashion influencers to be sustainable, even just putting a bit more effort into doing fashion right can be sustainable.</p><h3 class="bs-sub">Tokyo Thrift: Macklemore Them Tags</h3><h3 class="bs-sub">Swades</h3><h3 class="bs-sub">Conclusion</h3><p>Congratulations, you made it. So, to conclude, depending on where in the world it is that you&#x27;re shopping, it can be more or less sustainable to buy expensive or cheap. (Fascinating how that can happen. It&#x27;s almost as if one needs to look at who one is paying &amp; what for, along with how much.)</p><p data-role="resolution">It&#x27;s important to understand that the key takeaway here is not to consume in a way that is completely ethical (if you&#x27;ve either seen The Good Place or studied higher economics, (two equivalent philosophical qualifications) you might be familiar with the fact that that isn&#x27;t quite possible) but simply more ethical than all viable alternatives.</p><blockquote class="bs-quote">&quot;We do not need a handful of people doing zero waste perfectly. We need millions of people doing it imperfectly.&quot; Anne Marie Bonneau, Zero Waste Chef<span class="bs-q-who">— Anne Marie Bonneau, Zero Waste Chef</span></blockquote></div></div><div class="bs-scroll-secondary"><article id="story-1-women-s-college-infirmary-charges-five-r" class="bs-scroll-story"><div class="bs-head"><div class="bs-kicker">GENDER</div><h2 class="bs-hl">Women&#x27;s College Infirmary Charges Five Rupees Per Pad; Automatic Dispensers Charge Ten</h2><p class="bs-deck">At Kalindi College — a Delhi University institution that calls itself all-women&#x27;s and teaches courses in feminist theory — the medical infirmary charges students five rupees per sanitary pad. A ground report on the gap between institutional pride and the institutional care actually on offer.</p><div class="bs-byline">By Mouli Sharma</div></div><div class="bs-col"><p data-role="subtitle">Excessive control &amp; a resource-precious attitude make Kalindi College&#x27;s medical infirmary functionally redundant.</p><p data-role="lede">February 25, 2023, New Delhi: On 8 March 1914, the arrest of Sylvia Pankhurst was the domino that tipped the way to the celebration of International Women’s Day today. Over a century later, things are little more than marginally better, and the consolation we get is that at least they&#x27;re &#x27;changing.&#x27; And slowly but surely, it seems they are. Urban women’s lives have lost all identifiable traces of the barbaric pasts that unfortunately still cling to many. Yet there are some fundamental structures of our society, the very institutions that were meant to be the flag bearers of this change - lead the way, so to speak - that are perhaps holding it back. In Delhi University&#x27;s Kalindi College, one that takes great pride in calling itself an all-women’s institution (one that boasts of being one of what are DU&#x27;s handful of institutions that have a media department, &amp; in it countless courses has countless readings on gender, society &amp; feminist theory), an individual sanitary napkin at the already ill-equipped &amp; resource-fond infirmary incurs students a cost of a loud, dumbfounding 5 rupees. Decisions like these are what make the Pink Tax so pervasive &amp; inescapable in modern societal structures. The average ranges of Whisper &amp; Stayfree napkins, two of India’s most popular brands &amp; also the most commonly stocked in colleges like Kalindi, are priced at rupees Rs. 26-29 for the one-week packs, i.e. Rs. 4 per pad. Charging students a single rupee more, therefore neither subsidises this cost for them nor makes any significant contribution towards recovering let alone profiting off of it. The only purpose it serves, is to discourage students from using a facility that is meant to be for them.</p><h3 class="bs-sub">A ‘Well-Equipped’ Room: Shell Facilities in Government Institutes</h3><blockquote class="bs-quote">“My friend was on her period the other day, and so I&#x27;d gone to grab her a pad from the infirmary. I was charged 5 rupees for the napkin. The incident was stupefying in a way. It is not just about the amount you have to pay but the fact that you have to pay at all,” says Shruti Patel, a senior at Kalindi &amp; Head of Design at TVE. “You don&#x27;t expect there to be a fee on a pad in a college &#x27;medical room.’” “It&#x27;s degrading,” added another student. Interestingly, this resource-precious attitude is not limited to sanitary napkins, but extends to the entire facility of what Kalindi College&#x27;s website describes as a ‘well-equipped medical room [where] the college provides good medical facility to students &amp; staff.’ Students are forced to purchase basic first aid items like band-aids &amp; gauze from pharmacies outside the campus or exaggerate difficulties to be provided any help at the infirmary. “I remember my ankles being scraped raw the day of our NCC fest. I went to the medical room hoping to get some gauze or anything for relief, but all they gave me was one band-aid. The nurse said she wouldn’t give me even a second one unless I showed her blood,” says Manasvi Vats, the JUO of Udaan, Kalindi College’s NCC. Manasvi tells us she had to call up her friend to bring her band-aids from home instead. They cost 2 rupees. Dr. Rajshree Lal of the medical staff remains available for attending students and staff for their ‘minor complaints’ for three hours every alternate day of the week. The remaining time, the room is under the management of Ms. Rekha, who visits the college every day from 9 AM to 5 PM.</blockquote><blockquote class="bs-quote">Most students know the medical room as synonymous with nurse Rekha, a smiling, kind-faced woman who would rather the cleaning staff do her dirty work for her, both literally &amp; otherwise, as the following account from a senior who would rather remain anonymous describes. “I remember having a fever of around 100 one time back in my first year. I somehow managed to drag myself to the medical room in between classes - &amp; this was nearly noon, so the heat was severe - &amp; it was closed. The door was bolted. I looked around, I tried to ask people, but there was no one &amp; I was doing so poorly that eventually, I couldn’t wait anymore. I thought I’d at least get inside, and sit down; I was on the verge of passing out. So I unbolted the door &amp; sat down &amp; there was so much immediate relief, getting off my feet &amp; out of the heat. I must have waited for - what, at least another 15 minutes, before anyone came. I was so happy I thought I’d finally get something, anything, even just a Crocin, some damn electrolytes, whatever they’d give me, at that point, I’d be grateful. But turns out it was just someone from the cleaning staff who’d noticed the door was open. She came in &amp; started interrogating me, chastising me for presuming to let myself in, implying I may have vandalised the room &amp; god knows what else. She stayed till the nurse arrived, which was another 15 minutes later, but she made it very clear it wasn’t out of any real concern for my well-being, just ‘keeping watch’. By the time the nurse arrived, I was already sufficiently distracted from the fever by the third degree. She silently watched as the woman berated me for another long while, not just condoning but appreciating what had happened before finally asking me what was wrong. She gave me a small paracetamol tablet &amp; made me sign in the register.</blockquote><blockquote class="bs-quote">I’ve never gone to the medical room since.” The authorities’ description of the room &amp; its capabilities make it clear that they do not exceed beyond being able to provide extremely elementary medical aid to students for their, in their own words, ‘minor inconveniences.’ So, the refusal of medical staff to then entertain &amp; treat what inconveniences they do deem as minor, beg the question what purpose, if any, this facility serves at all. Accounts like the ones above are reflected in the tired resignation found in the two demographics most well versed with the medical room, NCC &amp; Sports. “We used to train (march) out in the parking lot during the summers &amp; students would pass out or come close on a near daily basis. If you bring another student to speak for you, the nurse reluctantly gives you glucose or something, because they can exaggerate the issue. If you are, say, dehydrated to the point of blacking out, you can get a glass of glucose,” said a senior of Udaan. This is especially egregious in the face of the faculty’s revelation that the only qualified doctor on the premises is only there to treat minor medical issues, transforming these incidents from those of general apathy to legitimate medical malpractice, constantly baiting students to bring them more than they can chew, &amp; refusing to bite what they can. What is most concerning about these incidents is they don’t seem to exist in isolation, but instead stem from a larger culture of institutional incompetence. Aspects of this incompetence can be observed in most government institutions, &amp; Delhi University is no exception, but Kalindi College’s sanitation sees a version of it so extreme that it stands in significant contrast to even other colleges of DU. Indira Gandhi Institute of Physical Education &amp; Sports Sciences is a small, single-department college in Delhi’s Vikaspuri.</blockquote><blockquote class="bs-quote">It is one of the 12 colleges of Delhi University 100% funded by the Delhi Government instead of the centre, &amp; its labs, faculty &amp; academia all suffer from a lack of regular financing. Even here, toilets are clean, &amp; pads are free, as told by Ritu, a first student in the only program offered by the college. So it is not a question of budget, but a question of apathy &amp; intent. Kalindi College, infamous for its mismanagement &amp; regular controversies recently went viral on Instagram due to the abysmal state of its student toilets. Its academic contributions are a long &amp; undulating list of predatory journals &amp; frivolous conventions. It must then be observed that the seeming redundancy of the infirmary is not noteworthy because it is anomalous, but precisely because it isn’t; following along a disturbing pattern of mismanagement at an institute that, despite its A+ NAAC accreditation, is plagued by a lack of seriousness.</blockquote></div></article><article id="story-2-i-am-the-head-of-my-household-he-is-the-" class="bs-scroll-story"><div class="bs-head"><div class="bs-kicker">POLITICS</div><h2 class="bs-hl">&#x27;I am the Head of my Household, He is the Head of India’s&#x27;: How Narendra Modi Earned the Favour of the Indian Middle Class</h2><p class="bs-deck">Manoj Jangra — CRPF retiree and family business owner in South-West Delhi — explains, in his own words, why he supports Narendra Modi. A ground-level portrait of the political convictions and disappointments that built, and continue to sustain, the BJP&#x27;s urban middle-class base.</p><div class="bs-byline">By Mouli Sharma</div></div><div class="bs-col"><p data-role="subtitle">Manoj Jangra, a small business owner in New Delhi’s Dwarka, &amp; a CRPF retiree tells us why he likes Modi, &amp; you should too.</p><p>Paintings &amp; bulk posters bought wholesale from Sadar Bazaar line the walls of the shop; Ram Vivah Pose A, Ram Vivah Pose B, Shiv Vivah (a rarity), Lakshmi Ganesh Sitting Pose (‘Seated Gods are good luck’). Along with online orders of album posters &amp; lyric art, the things that sell the most at their shop are Gods.</p><p>Mr. Jangra opened this shop back in 2014, after becoming disillusioned with the government institutions he was working for during the Lokpal Protests. If you ask him why he quit his job at the CRPF, he has a very clear answer. “Because of Kejriwal,” he says.</p><p data-role="testimony">“At the time there was Congress at the center, &amp; the corruption was suffocating. There was no end to it. I wasn’t even working for the government anymore, I was just working for individuals, all of them corrupt. Kejriwal used to speak so well. He fought the government fearlessly. He was so bold, he said he would pass the Lokpal bill, end the disparity. That these officers won’t travel as VIPs anymore. They will be like us. I was very moved by his promises. I fell for them.”</p><p>Today, thirteen years after the people of India took to the streets to fight Congress’ rule of corruption, the Lokpal protests remain a testament to the power of public dissent. The roar of a nation, following the voice of a small, insignificant man. Arvind Kejriwal’s words were powerful enough to move Manoj Jangra to reject a life of civil service, security, &amp; a salary.</p><h3 class="bs-sub">Pros &amp; Cons: ‘Achchhaiyan Bhi Toh Ginwao.’</h3><p data-role="testimony">“ Bohot hi negative way me lejata hai cheezon ko. Har cheez mei burai. Kabhi achhaia bhi toh ginwao.” (“He is too negative about everything. Always recounting criticisms. One should take into account positives too.”) Mr. Jangra does not believe it is reasonable to be so robustly critical of a government, regardless of elections, timing, &amp; party promises. He is in fact afraid, that if the party currently in power should lose, whatever good is being done (little or not) will be lost. If you ask him to reiterate why he doesn’t like Kejriwal’s work in New Delhi, though, he recounts the things that dissatisfy him.</p><p data-role="testimony">&quot; Road dekho. Bahar bahar ke nahi, bahar bahar ke toh theek kara dete hai, kyunki whaan se toh ye netaon vagehra ki gaadiyan jayengi. Yahan jahan aam janta rehta hai, kitne kharaab kar rakhe hai. Meri scooty raise hi tooti this. Ab gareeb aadmi ko farak nahi padta, road kaisa ho. Toh ye kuchh nahi karte .&quot; (“Look at the roads. Not the main ones, of course, the main ones are all fixed up, that’s where the ministers &amp; the big men drive. But the ones here where ordinary men like me live, the roads are terrible. My scooty broke because of roads like these. But the poor don’t care about roads. So they do nothing.”)</p><p>On being asked to elaborate on what some examples of the purported good that the Central Government has done may be, though, his eyes light up. Contrary to what now under arrest Delhi Chief Minister Arvind Kejriwal observed in his 2019 interview with Kunal Kamra, BJP supporters like Manoj Jangra do have an answer to the question (of just why it is that they like Mr. Narendra quite so much), &amp; they have thought about it plenty.</p><h3 class="bs-sub">What, Over the Past 10 Years, Should We be Grateful For?</h3><p data-role="testimony">“Ji pehli cheez toh hai security. Aaj se 10 saal pehle Dilli mei har jagah, buson mei, metro mei, sab jagah, announcement hote rehte the. ‘Kisi anjaan vastu ko na chhuye isme bum ho sakta hai.’Aaj kal sunai deti hai kahin?” (“The first thing is security. 10 years ago you could hear announcements in Delhi, in the buses, metros, everywhere: ‘Don&#x27;t touch unidentified objects, they may contain bombs.’ Do you hear them nowadays?”)</p><p data-role="testimony">“Isme check karne ka kya hai? Maine khud dekha hai apni aankhon se.” (“What is there to check? I&#x27;ve seen it with my own eyes.”)</p><p>Confident observations like these are what form the basis of much of the politics of Mr. Jangra, as well as that of most ordinary Indians. This striking affinity for reason, logic, &amp; critical thinking is characteristic of the Right Wing Indian - he does not believe in books, facts, or numbers. He believes only in what can be understood with logic. He believes only in his own observations, which he also believes he arrives at independently. After all, there is no evidence more damning than an eyewitness testimony.</p><p>In 2019, upon receiving complaints about the oversaturation of announcements on the Magenta Line, the DMRC announced that it would do away with 25 unessential announcements, &amp; only 7 important ones would stay in place inside the trains. ‘Security’ announcements like bomb alerts are the first of these seven. But that is neither logic nor reason.</p><p data-role="testimony">“Mai khud soch nahi sakta kya? ” (“Can&#x27;t I figure it out on my own?”)</p><p>He can. And he is welcome to. Upon analysis of terrorism databases &amp; reports by TVE it was found that there is indeed a correlation between terror attacks carried out before 2014 &amp; after, just not the one Mr. Jangra suggests. On the contrary, the top five years in Indian history by number of terrorist incidents, are all from the Modi Regime. But then again, correlation is not causation. And what credibility does the Global Terrorist Database have, anyway, compared to an ex-CRPF officer (Retd. 2014) &amp; a man with three generations&#x27; worth of relatives all over India &amp; the world?</p><p>When these statistics are quoted to him, he laughs in incredulity, finding them ridiculous.</p><p data-role="testimony">“You people will believe anything.”</p><p>Another of the Modi government’s achievements that makes Mr. Jangra’s chest swell up with pride is the great strides India has made under its tenure in matters of military self-reliance.</p><p data-role="testimony">“ Aaj se das saal pehle tak har cheez import hoti thi. Har hathiyaar. Koi bhi hathiyaar India mei nahi bante the. Aaj dekh lo. Haan jets vagehra toh import karne padte hi hai.” (“10 years ago everything used to be imported, every weapon. No weapon was made in India. Look at us now. Of course, we still have to import things like jets.”)</p><p>This Hindustan Times article from 2012 illustrates just how abysmal India’s position in global arms trade was before the Modi government came to power. Today, not only are our import rates lower, but our export rates are higher than ever. Much of this can be accredited to the strategic bans placed on imports of defense items over the last two years, which have now had four iterations. There has been an active push toward indigenisation, spearheaded by Defence Minister Rajnath Singh, &amp; it has not come without cost.</p><p>Domestic procurement alone in the military budget progressively increased from ₹51,000 crores in 2020 to nearly twice that at ₹1 Lakh crores in 2023 . In contrast, the entire allocation for education in the same budget was ₹1.2 Lakh crores. This colossal jump in expenses is justified as being a temporary measure that will change India’s military dependence &amp; make room for self-reliance, but 12 years &amp; 12 progressively increasing budgets later, we are still the world’s largest importer of arms. We still don’t feature in even the top 25 arms-exporting nations. India’s import rates have gone down from 13% to 9.8%, a 3.2% decrease over 12 years, i.e. just 0.26% a year. The decrease of our reliance on Russia has been parallelly accompanied by an increase of that on the West. But one must not always be critical.</p><p data-role="testimony">“ Women’s safety dekh lo. Buson mei aurton ke liye free ticketein. Transport. Bijli paani ki suvidhaayein. Bohot kuch badla hai. Bohot kuch behtar hua hai. Jab mai Dilli aaya tha toh hamara sir ke upar bulb tak nahi hota tha. Ham andhere mei rehte the.” (“Look at women&#x27;s safety. There&#x27;s free tickets for women in city buses. Transport, water &amp; electricity facilities. Much has changed. Much has improved. When I came to Delhi we didn&#x27;t even have a lightbulb above our heads. We used to live in the darkness.”)</p><p>Notably, free tickets for women in buses, free water &amp; electricity for residential consumption, &amp; last mile connectivity are all initiatives of the Aam Aadmi Party-run Delhi government, that have been taken, incidentally, also in the last 10 years.</p><p>When reminded that transport, electricity, &amp; water are jurisdictions of the state government, Mr. Jangra clarifies that he is speaking of improvements made to the nation at large. All of which, at the end of the day, are being made at the helm of the leader of the country: the Prime Minister.</p><p data-role="testimony">“Ab dekho, apna ghar mai chalata hun. Mere ghar mei kuch bhi achha hoga, meri beti tournament jeetegi ya mera beta afsar banega, toh ye meri bhi achievement hogi. Desh Pradhaan mantri chalata hai.” (“Look, I run my house. An achievement in my house - say, my daughter wins a tournament or my son becomes an officer - is my achievement too. The Prime Minister runs the country.”)</p><p>They must be.</p><p>When asked to go on listing examples, Mr. Jangra promises to think &amp; find more when he has the time. He hadn’t prepared for a presentation, after all.</p><p>In the conversation that follows, the mood is nudged away from the intense &amp; political to lighthearted small talk &amp; chit chat. Now that the procedural part of the interview is over, our correspondent offers commentary of their own on all that’s changed for the better in the Modi regime. A UPI payment card on the table can be seen standing out on the table, bright with colors of the Indian flag; Bharat Interface for Money.</p><p>Interestingly, India’s one-of-a-kind UPI system is not a matter of pride to Mr. Jangra. He hardly even believes that Western nations &amp; china did not invent the technology first.</p><p data-role="testimony">“ Haan par America ke paas toh aur pehle se tha, ” (“But America had the tech even earlier.”) he says, unsure, before our correspondent explains that he is confusing e-commerce technology with UPI, a payments interface developed by the National Payments Corporation of India (NPCI). He laughs, embarrassed, explaining that he is not very well-versed in these things. He doesn’t even have Paytm on his phone &amp; prefers to use cash; the QR codes in his shop are a necessity of the trade. But he accepts our correspondent&#x27;s praise for the technology with an open mind nevertheless.</p><p>She does not mention that the NPCI itself was established back in 2008, &amp; its ownership has since been shared between several promoter banks, mostly private ones, &amp; that Narendra Modi neither funded, initiated, nor endorsed the efforts behind making UPI a success, as he did later on &amp; with RuPay.</p><p data-role="testimony">Mr. Jangra smiles at the monologue, happy to see that his encouragement to look at the bright side stuck. “Fir log kehte hai vikaas nahi hota.” (“And then people say there isn&#x27;t development.”)</p></div></article></div></div><section class="bs-sheet bs-scroll-back"><div class="bs-backcover"><img class="bs-backcover-art" src="data:image/png;base64,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" alt=""><div class="bs-backcover-plate"></div><div class="bs-backcover-mono"><img src="data:image/png;base64,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" alt="V&amp;E"></div><div class="bs-backcover-qr-wrap"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANgAAADYAQAAAAChWxBAAAABIUlEQVR4nN2YzQrDMAyDpbD3f2UN/7VlsMO6HTKl0Ib44g/Zrh0Kb9fC/9seYG1EgQXLPvHgQ0IRoAQmp+rEhA8sxqBLPPTJTn6ur21ixqU6Orf1866NIZn29/Pz+FTulIATqrv5uW7aMIrp8ljVT/UuK0ulIOCknw7C1k71tdCP9Tuof/v5RYD75J9CxUNJRSGVh35oqi6dQwiX+Fzdb/KShig1t/Pzpo0dmZl5nEaNHvm34lU4uvRppE9/rRCuRoburRm9jAcfMjanuuBSYOTTvyhenXnHHvDgY20Cc+Z3FalL/mHuJCrtMCHqMh/xZAw87ujn+olNZ5EhbfSrNfcuR4Ntw6fXUQJ1C2PCx9plF9pDEuIyFDbz35u1k593bU97O5F5nOMvdQAAAABJRU5ErkJggg==" alt="Read online QR"> <div class="bs-backcover-qr-label">Read March 2024 online</div></div><div class="bs-backcover-foot">The Voice Express · March 2024</div></div></section><div class="bs-scroll-foot">The Voice Express &middot; March 2024 &middot; End of issue</div>
+</body></html>

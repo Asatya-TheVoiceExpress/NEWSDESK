@@ -1,0 +1,63 @@
+{
+  "_note": "Edit this file to customize all Voice Express printables, or use Desk Editor's Config board (python desk_editor/serve.py -> :8787).",
+  "broadsheet": {
+    "articles_on_front": 3,
+    "columns": 4,
+    "include_crossword_clues": false,
+    "include_sudoku": true,
+    "paper_size": "A4",
+    "puzzle_page_number": 3,
+    "sudoku_difficulty": "medium"
+  },
+  "contact": {
+    "email": "thevoiceexpress@proton.me",
+    "emag": "https://emag.thevoiceexpress.in",
+    "newsstand": "https://newsstand.thevoiceexpress.in",
+    "submissions": "thevoiceexpress@proton.me",
+    "submissions_note": "",
+    "website": "https://thevoiceexpress.in"
+  },
+  "magazine": {
+    "articles_per_ebook": 50,
+    "grayscale_images": false,
+    "include_masthead_page": true,
+    "include_support_page": true,
+    "include_visual_toc": true,
+    "issue_number": 42,
+    "paper_size": "A4"
+  },
+  "publication": {
+    "description": "",
+    "est": "2022",
+    "founding_statement": "",
+    "issue_note": "Free — Supported by readers",
+    "location": "New Delhi, India",
+    "name": "The Voice Express",
+    "tagline": "The Truth Takes Time.",
+    "volume": 18,
+    "website": "https://thevoiceexpress.in"
+  },
+  "support": {
+    "general_note": "",
+    "kofi": {
+      "label": "Support on Ko-fi",
+      "note": "",
+      "url": ""
+    },
+    "paypal": {
+      "label": "PayPal",
+      "note": "",
+      "url": ""
+    },
+    "razorpay": {
+      "label": "Support via Razorpay",
+      "note": "Cards, UPI and net banking",
+      "url": "https://razorpay.me/@mitaliaayatmahnoorsharma"
+    }
+  },
+  "team": {
+    "editor_in_chief": "Mouli",
+    "note": "",
+    "web_developer": "Mitali (Aayat Mahnoor)"
+  }
+}

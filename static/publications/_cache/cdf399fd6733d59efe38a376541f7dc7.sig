@@ -1,0 +1,1 @@
+2026-06-07T11:04:14.352014|{"accent": "#8a6216", "cover_note": "", "extra_css": "", "page_numbers": true, "toc": false}

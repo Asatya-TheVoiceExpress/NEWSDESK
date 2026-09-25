@@ -1,0 +1,12 @@
+flask==3.0.3
+flask-cors==4.0.1
+werkzeug==3.0.3
+beautifulsoup4==4.12.3
+Pillow==12.2.0
+qrcode==8.2
+reportlab==4.0.7
+gunicorn==21.2.0
+requests==2.32.3
+playwright==1.48.0   # broadsheet / gazette PDF (needs `playwright install chromium`)
+PyMuPDF==1.27.2.3    # fitz -- pdf_design_editor.py
+pypandoc==1.16.2     # desk_editor/serve.py document ingest

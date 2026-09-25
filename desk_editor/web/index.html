@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voice Express - Desk Editor</title>
+  <link rel="stylesheet" href="/vendor/app.css">
+  <link rel="stylesheet" href="/styles/chrome.css">
+</head>
+<body>
+  <div class="de-app">
+
+    <header class="de-tabs" id="de-tabs">
+      <button class="de-brand" id="de-brand" title="Library">
+        <img src="/vendor/logo" alt="The Voice Express"><span>desk</span></button>
+      <div class="de-tabstrip" id="de-tabstrip"></div>
+      <button class="de-tab-new" id="de-tab-new" title="Open / new (Ctrl+O)">+</button>
+      <div class="de-tabs-spacer"></div>
+      <div class="de-savestate" id="de-savestate">ready</div>
+      <button class="de-icon-btn" id="de-btn-help" title="Keyboard shortcuts (F1 / ?)">?</button>
+      <button class="de-icon-btn" id="de-btn-zen" title="Full-screen focus mode (Esc to exit)">⤢</button>
+      <button class="de-icon-btn" id="de-btn-library" title="Library / manage articles">Library</button>
+      <button class="de-icon-btn" id="de-btn-authors" title="Authors">Authors</button>
+      <button class="de-icon-btn" id="de-btn-taxonomy" title="Categories, Sections, Tags, Series">Taxonomy</button>
+      <button class="de-icon-btn" id="de-btn-specials" title="Columns & special publications (PDFs/ebooks)">Specials</button>
+      <button class="de-icon-btn" id="de-btn-pages" title="Edit About / Submissions / other site pages">Pages</button>
+      <button class="de-icon-btn" id="de-btn-config" title="Publication, team, contact, support & print settings">Config</button>
+      <button class="de-icon-btn" id="de-btn-ingest" title="Import a Word/RTF/ODT document as a new draft">Import doc</button>
+      <input type="file" id="de-ingest-input" accept=".docx,.doc,.rtf,.odt,.html,.htm,.md,.txt" hidden>
+      <button class="de-icon-btn" id="de-btn-preview" title="Preview">preview</button>
+      <button class="de-icon-btn" id="de-btn-publish" title="Mark this article live">Publish</button>
+      <a class="de-icon-btn de-good" href="http://localhost:8790" target="_blank" id="de-btn-newsroom" title="Newsroom: collect reader data, publish to both sites, analytics" style="text-decoration:none">▤ Newsroom</a>
+      <button class="de-icon-btn" id="de-btn-rebuild" title="Rebuild the emag and Stand only. For the full ordered publish (artifacts + moderation + both sites) use the Newsroom.">⇪ Push live</button>
+      <button class="de-icon-btn de-primary" id="de-btn-save" title="Save draft (Ctrl+S)">Save</button>
+    </header>
+
+    <div class="de-toolbar" id="de-toolbar">
+      <div class="de-tb-group">
+        <button data-mark="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+        <button data-mark="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+        <button data-cmd="link" title="Link (Ctrl+K)">link</button>
+        <button data-cmd="footnote" title="Footnote">fn</button>
+        <button data-cmd="cite" title="Insert citation">cite</button>
+      </div>
+      <div class="de-tb-sep"></div>
+      <div class="de-tb-group" id="de-insert-group"></div>
+      <div class="de-tb-sep"></div>
+      <div class="de-tb-group">
+        <label class="de-role-label">role
+          <select id="de-role-select"><option value="">body</option></select>
+        </label>
+      </div>
+      <div class="de-tabs-spacer"></div>
+      <div class="de-tb-group de-zoom">
+        <button id="de-zoom-out" title="Narrower">-</button>
+        <span id="de-measure">46<small>rem</small></span>
+        <button id="de-zoom-in" title="Wider">+</button>
+      </div>
+    </div>
+
+    <div class="de-body" id="de-body">
+      <button class="de-edge de-edge-left" id="de-edge-left" title="Show media / sources" hidden>›</button>
+      <button class="de-edge de-edge-right" id="de-edge-right" title="Show inspector" hidden>‹</button>
+
+      <aside class="de-rail de-rail-left" id="de-rail-left">
+        <div class="de-rail-tabs">
+          <button class="de-rail-tab is-on" data-pane="media">Media</button>
+          <button class="de-rail-tab" data-pane="sources">Sources</button>
+        </div>
+        <div class="de-pane" id="de-pane-media"></div>
+        <div class="de-pane" id="de-pane-sources" hidden></div>
+        <button class="de-rail-collapse" data-side="left" title="Collapse">&laquo;</button>
+      </aside>
+
+      <div class="de-split" data-split="left"></div>
+
+      <main class="de-main" id="de-main">
+        <div class="de-canvas-wrap" id="de-canvas-wrap">
+          <div class="de-canvas art-content" id="de-canvas" contenteditable="true" spellcheck="true"></div>
+        </div>
+      </main>
+
+      <div class="de-split" data-split="right"></div>
+
+      <aside class="de-rail de-rail-right" id="de-rail-right">
+        <div class="de-rail-tabs">
+          <button class="de-rail-tab is-on" data-pane="doc">Document</button>
+          <button class="de-rail-tab" data-pane="block">Block</button>
+          <button class="de-rail-tab" data-pane="cites">Citations</button>
+          <button class="de-rail-tab" data-pane="trans">Translations</button>
+          <button class="de-rail-tab" data-pane="history">History</button>
+        </div>
+        <div class="de-pane" id="de-pane-doc"></div>
+        <div class="de-pane" id="de-pane-block" hidden></div>
+        <div class="de-pane" id="de-pane-cites" hidden></div>
+        <div class="de-pane" id="de-pane-trans" hidden></div>
+        <div class="de-pane" id="de-pane-history" hidden></div>
+        <button class="de-rail-collapse" data-side="right" title="Collapse">&raquo;</button>
+      </aside>
+    </div>
+
+    <footer class="de-status" id="de-status">
+      <span id="de-stat-words">0 words</span>
+      <span id="de-stat-read">1 min</span>
+      <span id="de-stat-slug"></span>
+      <span id="de-stat-section"></span>
+      <span class="de-tabs-spacer"></span>
+      <span id="de-stat-save">unsaved</span>
+    </footer>
+  </div>
+
+  <div class="de-float de-seltoolbar" id="de-seltoolbar" hidden></div>
+  <div class="de-float de-menu" id="de-slash" hidden></div>
+  <div class="de-float de-menu" id="de-context" hidden></div>
+  <div class="de-float de-tooltip" id="de-tooltip" hidden></div>
+  <div class="de-float de-bhandle" id="de-bhandle" title="Drag to move block" hidden>⠿</div>
+  <div class="de-float de-dropline" id="de-dropline" hidden></div>
+  <button class="de-zen-exit" id="de-zen-exit" title="Exit focus mode (Esc)" hidden>Exit focus ⤢ <small>Esc</small></button>
+
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>

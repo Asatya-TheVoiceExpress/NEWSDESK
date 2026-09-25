@@ -1,0 +1,5 @@
+{
+  "db_path": "../voice_express.db",
+  "media_path": "../static/uploads",
+  "port": 8789
+}

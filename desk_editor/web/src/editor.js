@@ -110,14 +110,23 @@ export class Editor {
     this.changed();
   }
   insertFootnote() {
-    const n = this.canvas.querySelectorAll('sup[data-fn]').length + 1;
+    const n = this.canvas.querySelectorAll('p.fn[id^="fn"]').length + 1;
     this.insertHTMLAtCaret(`<sup data-fn="${n}">${n}</sup>`);
     if (!this.canvas.querySelector(`#fn${n}`))
       this.canvas.appendChild(
         document.createRange().createContextualFragment(`<p class="fn" id="fn${n}">${n}. Note…</p>`));
     this.changed();
   }
-  insertCitationRef(n) { this.insertHTMLAtCaret(`<sup data-fn="${n}">${n}</sup>`); }
+  insertCitationRef(n) { this.insertHTMLAtCaret(`<sup data-cite="${n}">[${n}]</sup>`); }
+  // After citation `removed` (1-based) is deleted: drop its markers, shift later ones down.
+  renumberCitations(removed) {
+    this.canvas.querySelectorAll('sup[data-cite]').forEach(s => {
+      const n = parseInt(s.dataset.cite, 10);
+      if (n === removed) s.remove();
+      else if (n > removed) { s.dataset.cite = String(n - 1); s.textContent = `[${n - 1}]`; }
+    });
+    this.changed();
+  }
 
   selectionText() { const r = this.range(); return r ? r.toString() : ''; }
   convertSelectionTo(kind, attribution) {
@@ -179,8 +188,12 @@ export class Editor {
     this._restore(this.present);
   }
   _restore(html) {
+    // keep the caret near where it was instead of jumping to the end
+    const blocks = [...this.canvas.children];
+    const at = Math.max(0, blocks.indexOf(this.activeBlock()));
     this.canvas.innerHTML = html; hydrate(this.canvas);
-    this.placeCaret(this.canvas.lastElementChild || this.canvas, false);
+    const target = this.canvas.children[Math.min(at, this.canvas.children.length - 1)] || this.canvas;
+    this.placeCaret(target, false);
     this.onChange();
   }
 

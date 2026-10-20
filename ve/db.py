@@ -74,10 +74,29 @@ def migrate(db):
         author_id   INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
         role        TEXT DEFAULT 'author',
         sort_order  INTEGER DEFAULT 0,
-        PRIMARY KEY (article_id, author_id)
+        PRIMARY KEY (article_id, author_id, role)
     )''')
+    pk = [r[1] for r in sorted(db.execute('PRAGMA table_info(article_authors)').fetchall(),
+                               key=lambda r: r[5]) if r[5]]
+    if 'role' not in pk:
+        # one person can hold several credits on a story (e.g. writer and photographer)
+        db.execute('''CREATE TABLE article_authors_new (
+            article_id  INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+            author_id   INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
+            role        TEXT NOT NULL DEFAULT 'author',
+            sort_order  INTEGER DEFAULT 0,
+            PRIMARY KEY (article_id, author_id, role)
+        )''')
+        db.execute('''INSERT OR IGNORE INTO article_authors_new (article_id, author_id, role, sort_order)
+                      SELECT aa.article_id, aa.author_id, COALESCE(aa.role, 'author'), aa.sort_order
+                      FROM article_authors aa
+                      JOIN articles ar ON ar.id = aa.article_id
+                      JOIN authors au ON au.id = aa.author_id''')
+        db.execute('DROP TABLE article_authors')
+        db.execute('ALTER TABLE article_authors_new RENAME TO article_authors')
     db.execute('''INSERT OR IGNORE INTO article_authors (article_id, author_id, role, sort_order)
-                  SELECT id, author_id, 'author', 0 FROM articles WHERE author_id IS NOT NULL''')
+                  SELECT id, author_id, 'author', 0 FROM articles
+                  WHERE author_id IS NOT NULL AND id NOT IN (SELECT article_id FROM article_authors)''')
     db.commit()
     db.execute('''CREATE TABLE IF NOT EXISTS columns (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -334,6 +334,10 @@ textarea{resize:vertical;min-height:80px}
 .read-mode .art-title{font-size:clamp(1.7rem,4vw,2.5rem)}
 
 .author-card{border:var(--rule);padding:1.35rem;margin-top:2.5rem;display:grid;grid-template-columns:76px 1fr;gap:1.15rem;align-items:start}
+.credits-sect{margin-top:2.5rem;display:flex;flex-direction:column}
+.credits-h{font-family:var(--fm);font-size:.59rem;letter-spacing:.2em;text-transform:uppercase;border-bottom:var(--rk);padding-bottom:.38rem;margin-bottom:0}
+.credits-sect .author-card{margin-top:0;border-top:none;grid-template-columns:64px 1fr}
+.au-more{font-family:var(--fm);font-size:.58rem;color:var(--g500);margin-top:.32rem;letter-spacing:.06em;text-transform:uppercase}
 .avatar{border-radius:50%;background:var(--g200);overflow:hidden;border:var(--rule);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;color:var(--g600);flex-shrink:0}
 .avatar img{width:100%;height:100%;object-fit:cover}
 .au-role{font-family:var(--fm);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:.18rem}
@@ -1037,7 +1041,7 @@ footer{border-top:var(--rk);margin-top:4rem;padding:2rem;text-align:center}
 .art-content .qa-line{margin:.5em 0;text-indent:0}
 .art-content .qa-speaker{font-family:var(--fm);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--ink);margin-right:.4em}
 
-.art-content sup[data-fn]{font-family:var(--fm);font-size:.62em;font-weight:700}
+.art-content sup[data-fn],.art-content sup[data-cite]{font-family:var(--fm);font-size:.62em;font-weight:700}
 .art-content .fn{font-family:var(--fb);font-size:.84rem;color:var(--g600);border-top:var(--rt);padding-top:.3em;margin:.3em 0}
 
 .art-content figure,.art-content .photo-unit{margin:1.9em 0}

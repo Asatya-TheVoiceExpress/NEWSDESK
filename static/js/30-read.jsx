@@ -17,6 +17,26 @@ function bylineCredits(authors){
   });
   return Object.keys(groups).map(r=>`${ROLE_BYLINE_LABEL[r]||r[0].toUpperCase()+r.slice(1)+' by'} ${joinNames(groups[r])}`);
 }
+var ROLE_CREDIT_LABEL={author:'Writer','co-author':'Writer',photographer:'Photographer',
+  illustrator:'Illustrator',translator:'Translator',editor:'Editor','post-editor':'Post-editor',
+  typesetter:'Typesetter','as-told-to':'As told to',reporting:'Additional reporting'};
+var ROLE_CREDIT_ORDER=['author','co-author','reporting','as-told-to','photographer','illustrator',
+  'translator','editor','post-editor','typesetter'];
+function creditPeople(authors){
+  const byId={};
+  (authors||[]).forEach(a=>{
+    if(!a||!a.name)return;
+    const p=byId[a.id]||(byId[a.id]={...a,roles:[]});
+    const r=a.role||'author';
+    if(!p.roles.includes(r))p.roles.push(r);
+  });
+  const rank=r=>{const i=ROLE_CREDIT_ORDER.indexOf(r);return i<0?99:i;};
+  return Object.values(byId).map(p=>{
+    p.roles.sort((x,y)=>rank(x)-rank(y));
+    const labels=[...new Set(p.roles.map(r=>ROLE_CREDIT_LABEL[r]||r[0].toUpperCase()+r.slice(1)))];
+    return {...p,label:labels.length>1?labels.slice(0,-1).join(', ')+' & '+labels[labels.length-1]:labels[0],rank:rank(p.roles[0])};
+  }).sort((a,b)=>a.rank-b.rank||(a.sort_order||0)-(b.sort_order||0));
+}
 
 var ANN_LS_KEY='ve-local-annotations';
 function lsAllAnns(){ try{return JSON.parse(localStorage.getItem(ANN_LS_KEY)||'{}');}catch(e){return {};} }
@@ -587,7 +607,7 @@ function ArticleView({article:init,setView,go,goBack,readMode,setReadMode,toast,
         {art.category_name&&<div className="art-cat-lbl" onClick={()=>setView(art.category_slug)}>{art.category_name}</div>}
         <h1 className="art-title">{title}</h1>
         {subtitle&&<div className="art-subtitle">{subtitle}</div>}
-        {excerpt&&<div className="art-deck">{excerpt}</div>}
+        {excerpt&&excerpt.trim()!==subtitle.trim()&&<div className="art-deck">{excerpt}</div>}
         <div className="art-byline">
           {(() => {
             const writers=(art.authors||[]).filter(au=>!au.role||au.role==='author'||au.role==='co-author');
@@ -687,7 +707,32 @@ function ArticleView({article:init,setView,go,goBack,readMode,setReadMode,toast,
           </div>
         )}
 
-        {art.author_name&&(
+        {creditPeople(art.authors).length>0?(
+          <section className="credits-sect" aria-label="Credits">
+            <h3 className="credits-h">Credits</h3>
+            {creditPeople(art.authors).map(p=>(
+              <div key={p.id} className="author-card"
+                style={{cursor:goToAuthor?'pointer':'default',transition:'background .15s'}}
+                onClick={()=>goToAuthor&&goToAuthor(p.id)}
+                onMouseOver={e=>{if(goToAuthor)e.currentTarget.style.background='var(--g100)';}}
+                onMouseOut={e=>{e.currentTarget.style.background='';}}>
+                <Avatar author={p} size={64}/>
+                <div>
+                  <div className="au-role">{p.label}</div>
+                  <div className="au-name">{p.name}</div>
+                  {p.bio&&<div className="au-bio">{p.bio}</div>}
+                  {(p.social_twitter||p.social_instagram)&&(
+                    <div className="au-social">
+                      {p.social_twitter&&<span>{p.social_twitter}</span>}
+                      {p.social_instagram&&<span style={{marginLeft:'.75rem'}}>{p.social_instagram}</span>}
+                    </div>
+                  )}
+                  {goToAuthor&&<div className="au-more">View all stories →</div>}
+                </div>
+              </div>
+            ))}
+          </section>
+        ):art.author_name&&(
           <div className="author-card"
             style={{cursor:art.author_id&&goToAuthor?'pointer':'default',transition:'background .15s'}}
             onClick={()=>art.author_id&&goToAuthor&&goToAuthor(art.author_id)}

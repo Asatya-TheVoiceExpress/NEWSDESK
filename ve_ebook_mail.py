@@ -9,6 +9,8 @@ STAND_CNAME = os.path.join(STAND_DIR, 'CNAME')
 STAND_CATALOG = os.path.join(STAND_DIR, 'catalog.json')
 
 from site_data_get import call, migrate
+import html as _html
+import ve.mailer as mailer
 
 
 def log(msg):
@@ -39,6 +41,23 @@ def catalog_urls():
         if pid and url:
             out[int(pid)] = url
     return out
+
+
+def ebook_message(name, title, url):
+    e = _html.escape
+    text = (f'Hello {name},\n\n'
+            f'The ebook you asked us to put together — "{title}" — is ready, '
+            f'and it is on the Newsstand now:\n\n{url}\n\n'
+            'It is an ePub: open it in Apple Books, Calibre, KOReader, or any e-reader.\n\n'
+            'Thank you for reading.\n\nThe Voice Express\nhttps://emag.thevoiceexpress.in\n')
+    html = (f'<p>Hello {e(name)},</p>'
+            f'<p>The ebook you asked us to put together — <b>{e(title)}</b> — is ready, '
+            'and it is on the Newsstand now.</p>'
+            f'<p><a href="{e(url)}">Download your ebook</a></p>'
+            '<p>It is an ePub: open it in Apple Books, Calibre, KOReader, or any e-reader.</p>'
+            '<p>Thank you for reading.<br><b>The Voice Express</b><br>'
+            '<a href="https://emag.thevoiceexpress.in">emag.thevoiceexpress.in</a></p>')
+    return text, html
 
 
 def pending(conn):
@@ -75,11 +94,15 @@ def send_all(conn, apply=False):
             log(f'would mail {r["email"]} -> {link}')
             sent += 1
             continue
+        name = (r['requester_name'] or 'reader').strip()[:100] or 'reader'
+        title = (r['title'] or 'Your Voice Express ebook').strip()[:200]
         try:
-            res = call('ebook_email', to=r['email'],
-                       name=r['requester_name'] or 'reader',
-                       title=r['title'] or 'Your Voice Express ebook',
-                       url=link)
+            if mailer.configured():
+                text, html = ebook_message(name, title, link)
+                mailer.send(r['email'], f'Your ebook is ready — {title}', text, html)
+                res = {'ok': True, 'sent': 1}
+            else:
+                res = call('ebook_email', to=r['email'], name=name, title=title, url=link)
         except Exception as e:
             log(f'request {r["id"]}: send failed ({e}) -- will retry next publish')
             continue

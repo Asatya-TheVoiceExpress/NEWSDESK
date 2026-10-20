@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import hashlib
+import html as html_mod
 import json
 import os
 import re
@@ -142,16 +143,34 @@ def record_history(db, aid, action, language=None):
         print(f'[history] {e}')
 
 
-def record_version(db, aid, message='edited'):
+VERSION_EVERY_SECONDS = 600
+
+
+def record_version(db, aid, message='edited', force=True):
+    """Snapshot the article. Autosaves (force=False) snapshot at most every 10 minutes."""
     try:
+        if not force:
+            last = db.execute("SELECT (julianday('now') - julianday(created_at)) * 86400 AS age "
+                              'FROM article_versions WHERE article_id=? ORDER BY id DESC LIMIT 1',
+                              [aid]).fetchone()
+            if last and last['age'] is not None and last['age'] < VERSION_EVERY_SECONDS:
+                return
         row = db.execute('SELECT title,subtitle,excerpt,seo_description,seo_keywords,content,'
                          'byline,status,featured_image,category_id,section_id,published_at '
                          'FROM articles WHERE id=?', [aid]).fetchone()
         if not row:
             return
+        snap = dict(row)
+        snap['_authors'] = [{'author_id': a['author_id'], 'role': a['role'], 'sort_order': a['sort_order']}
+                            for a in authors_of(db, aid)]
+        snap['_tag_ids'] = [r['tag_id'] for r in db.execute(
+            'SELECT tag_id FROM article_tags WHERE article_id=?', [aid]).fetchall()]
+        snap['_citations'] = [dict(r) for r in db.execute(
+            'SELECT reference_text,url,author,published_date FROM citations '
+            'WHERE article_id=? ORDER BY citation_number', [aid]).fetchall()]
         db.execute('INSERT INTO article_versions (article_id,user_id,display_name,message,snapshot) '
                    'VALUES (?,?,?,?,?)',
-                   [aid, None, 'desk editor', message, json.dumps(dict(row), ensure_ascii=False)])
+                   [aid, None, 'desk editor', message, json.dumps(snap, ensure_ascii=False)])
     except Exception as e:
         print(f'[version] {e}')
 
@@ -219,7 +238,8 @@ def _write_article(db, data, aid=None):
                        'VALUES (?,?,?,?,?,?)',
                        [aid, c.get('reference_text', ''), c.get('url', ''), c.get('author', ''),
                         c.get('published_date', ''), i])
-    record_version(db, aid, (data.get('version_message') or 'saved from desk editor')[:200])
+    record_version(db, aid, (data.get('version_message') or 'saved from desk editor')[:200],
+                   force=bool(data.get('version')) or not ex)
     record_history(db, aid, 'created' if not ex else 'edited')
     return aid, slug
 
@@ -230,10 +250,11 @@ def render_preview(db, aid):
         return None
     authors = authors_of(db, aid)
     byline = art['byline'] or compose_byline(authors)
-    sub = art['subtitle'] or ''
-    html = f"""<!doctype html><html lang="{art['language'] or 'en'}"><head>
+    esc = lambda v: html_mod.escape(v or '')
+    title, sub, byline = esc(art['title']), esc(art['subtitle']), esc(byline)
+    html = f"""<!doctype html><html lang="{esc(art['language']) or 'en'}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{art['title']}</title>
+<title>{title}</title>
 <link rel="stylesheet" href="/vendor/app.css">
 <style>body{{margin:0;background:var(--paper,#f7f6f2)}}
 .de-preview{{max-width:46rem;margin:0 auto;padding:3rem 1.5rem}}
@@ -242,7 +263,7 @@ def render_preview(db, aid):
 .de-preview .de-byline{{font-family:var(--fm);text-transform:uppercase;letter-spacing:.08em;
   font-size:.72rem;color:var(--g600);border-top:1px solid currentColor;padding-top:.6em;margin-bottom:2em}}</style>
 </head><body><article class="de-preview art-content">
-<h1>{art['title']}</h1>{f'<p class="de-sub">{sub}</p>' if sub else ''}
+<h1>{title}</h1>{f'<p class="de-sub">{sub}</p>' if sub else ''}
 {f'<p class="de-byline">{byline}</p>' if byline else ''}
 {art['content'] or ''}
 </article></body></html>"""
@@ -433,9 +454,22 @@ def restore_version(aid, vid):
         if not r:
             return jsonify({'error': 'Not found'}), 404
         snap = json.loads(r['snapshot'])
-        cols = [k for k in snap if k != 'id']
+        record_version(db, aid, f'before restoring v{vid}')
+        cols = [k for k in snap if k != 'id' and not k.startswith('_')]
         db.execute(f"UPDATE articles SET {', '.join(f'{c}=?' for c in cols)}, updated_at=? WHERE id=?",
                    [snap[c] for c in cols] + [now_iso(), aid])
+        if '_authors' in snap:
+            set_article_authors(db, aid, snap['_authors'])
+        if '_tag_ids' in snap:
+            db.execute('DELETE FROM article_tags WHERE article_id=?', [aid])
+            for tid in snap['_tag_ids']:
+                db.execute('INSERT OR IGNORE INTO article_tags VALUES (?,?)', [aid, tid])
+        if '_citations' in snap:
+            db.execute('DELETE FROM citations WHERE article_id=?', [aid])
+            for i, c in enumerate(snap['_citations'], 1):
+                db.execute('INSERT INTO citations (article_id,reference_text,url,author,published_date,citation_number) '
+                           'VALUES (?,?,?,?,?,?)', [aid, c.get('reference_text', ''), c.get('url', ''),
+                                                    c.get('author', ''), c.get('published_date', ''), i])
         record_version(db, aid, f'restored v{vid}')
         db.commit()
         return jsonify({'success': True})
@@ -1510,6 +1544,10 @@ def batch_update():
             cols = ', '.join(f'{k}=?' for k in sets) + ', updated_at=?'
             db.execute(f'UPDATE articles SET {cols} WHERE id IN ({ph})',
                        list(sets.values()) + [now_iso()] + ids)
+            if sets.get('status') == 'published':
+                db.execute(f"UPDATE articles SET published_at=? WHERE id IN ({ph}) "
+                           "AND (published_at IS NULL OR published_at='')",
+                           [datetime.now().replace(microsecond=0).isoformat()] + ids)
         for tid in add_tags:
             for aid in ids:
                 db.execute('INSERT OR IGNORE INTO article_tags VALUES (?,?)', [aid, tid])

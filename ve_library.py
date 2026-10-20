@@ -242,7 +242,8 @@ _ROLE_BYLINE = {'photographer': 'Photos by', 'illustrator': 'Art by',
 
 
 def article_authors_list(db, aid):
-    rows = db.execute('''SELECT aa.author_id AS id, au.name, aa.role, aa.sort_order
+    rows = db.execute('''SELECT aa.author_id AS id, au.name, aa.role, aa.sort_order,
+        au.role AS position, au.bio, au.avatar_url, au.social_twitter, au.social_instagram
         FROM article_authors aa JOIN authors au ON au.id=aa.author_id
         WHERE aa.article_id=? ORDER BY aa.sort_order, aa.author_id''', [aid]).fetchall()
     return [dict(r) for r in rows]

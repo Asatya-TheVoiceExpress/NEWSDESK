@@ -25,20 +25,21 @@ const blankState = () => ({ id: null, title: '', slug: '', subtitle: '', excerpt
 
 let lookups, editor, palette, sources, inspector, menus;
 let tabs = [], active = -1;
-let saveTimer = null;
+let loading = false;
 
 const ctx = {
   get lookups() { return lookups; },
   state: blankState(),
   getArticleId: () => ctx.state.id,
-  async ensureArticleId() { if (!ctx.state.id) await save(true); return ctx.state.id; },
-  markDirty() { if (tabs[active]) tabs[active].dirty = true; setSave('unsaved', 'is-dirty'); scheduleAutosave(); updateStats(); },
+  async ensureArticleId() { if (!ctx.state.id) await save(tabs[active], { silent: true }); return ctx.state.id; },
+  markDirty() { markTabDirty(tabs[active]); updateStats(); },
   onTitle() { renderTabs(); updateStats(); },
   getCitations: () => ctx.state.citations,
   addCitation(c) { if (!ctx.state.citations.some(x => x.url && x.url === c.url)) { ctx.state.citations.push(c); ctx.markDirty(); inspector.renderCites(); } },
   newCitationInline() { ctx.state.citations.push({ reference_text: '', url: '', author: '', published_date: '' }); showRightPane('cites'); inspector.renderCites(); ctx.markDirty(); },
-  annotate(text) { const note = prompt(`Annotation on "${text.slice(0, 30)}…"`); if (note) { editor.focus(); const n = editor.canvas.querySelectorAll('sup[data-fn]').length + 1; editor.insertCitationRef(n); editor.canvas.insertAdjacentHTML('beforeend', `<p class="fn" id="fn${n}">${n}. ${escapeHTML(note)}</p>`); ctx.markDirty(); } },
+  annotate(text) { const note = prompt(`Annotation on "${text.slice(0, 30)}…"`); if (note) { editor.focus(); const n = editor.canvas.querySelectorAll('p.fn[id^="fn"]').length + 1; editor.insertCitationRef(n); editor.canvas.insertAdjacentHTML('beforeend', `<p class="fn" id="fn${n}">${n}. ${escapeHTML(note)}</p>`); ctx.markDirty(); } },
   reload() { if (ctx.state.id) openArticle(ctx.state.id, true); },
+  isDirty: () => !!tabs[active]?.dirty,
   setFeatured(url) { if (!url) return; ctx.state.featured_image = url; ctx.markDirty(); if (!$('de-pane-doc').hidden) inspector.renderDoc(); },
   async injectFromDrop(dt) {
     const id = await ctx.ensureArticleId();
@@ -70,8 +71,14 @@ async function boot() {
 }
 
 function onChange() {
-  if (tabs[active]) { tabs[active].dirty = true; }
+  if (!loading) markTabDirty(tabs[active]);
   updateStats();
+}
+function markTabDirty(t) {
+  if (!t) return;
+  t.dirty = true; t.rev = (t.rev || 0) + 1;
+  if (t === tabs[active]) setSave('unsaved', 'is-dirty');
+  scheduleAutosave(t);
 }
 function onCaret() {
   editor.canvas.querySelectorAll('.de-active-block').forEach(n => n.classList.remove('de-active-block'));
@@ -186,7 +193,7 @@ function wireShortcuts() {
   document.addEventListener('keydown', (e) => {
     const mod = e.ctrlKey || e.metaKey;
     const editing = ['INPUT', 'TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable;
-    if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+    if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); save(tabs[active], { manual: true }); }
     else if (mod && e.key.toLowerCase() === 'o') { e.preventDefault(); openWIP(); }
     else if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); editor.makeLink(); }
     else if (e.key === 'F1') { e.preventDefault(); openHelp(); }
@@ -230,7 +237,7 @@ function openHelp() {
 }
 function wireTopButtons() {
   $('de-tab-new').onclick = openWIP;
-  $('de-btn-save').onclick = () => save();
+  $('de-btn-save').onclick = () => save(tabs[active], { manual: true });
   $('de-btn-preview').onclick = doPreview;
   $('de-btn-publish').onclick = doPublish;
   $('de-btn-ingest').onclick = () => $('de-ingest-input').click();
@@ -272,8 +279,8 @@ async function doIngest(file) {
 async function doPublish() {
   if (!confirm('Publish to the live site? This sets the article live for the print + publishing pipelines.')) return;
   ctx.state.status = 'published';
-  if (!ctx.state.published_at) ctx.state.published_at = new Date().toISOString().slice(0, 16);
-  await save();
+  if (!ctx.state.published_at) ctx.state.published_at = localNow();
+  await save(tabs[active], { manual: true, message: 'published' });
   inspector.renderDoc();
 }
 async function refreshLookups() {
@@ -281,9 +288,17 @@ async function refreshLookups() {
   if (!$('de-pane-doc').hidden) inspector.renderDoc();
 }
 
+function makeTab(state, html) {
+  return { key: 'k' + Math.random().toString(36).slice(2), state: state || blankState(),
+    html: html || '<p><br></p>', dirty: false, rev: 0, saving: null, again: false, timer: null };
+}
 function newTab(state) {
-  const t = { key: 'k' + Math.random().toString(36).slice(2), state: state || blankState(), html: '<p><br></p>', dirty: false };
-  tabs.push(t); switchTo(tabs.length - 1);
+  tabs.push(makeTab(state)); switchTo(tabs.length - 1);
+}
+function isBlankTab(t) {
+  if (!t || t.state.id || t.dirty || t.saving) return false;
+  const html = t === tabs[active] ? editor.serialize() : t.html;
+  return !t.state.title && !html.replace(/<[^>]+>/g, '').trim() && !/<img/i.test(html);
 }
 function captureActive() {
   if (active < 0 || !tabs[active]) return;
@@ -292,11 +307,16 @@ function captureActive() {
 }
 function switchTo(i, force = false) {
   if (i === active && !force) return;
-  if (i !== active) captureActive();
+  if (i !== active) {
+    captureActive();
+    const prev = tabs[active];
+    if (prev && prev.dirty && canAutosave(prev)) save(prev, { silent: true });
+  }
   active = i;
   const t = tabs[i];
   ctx.state = t.state;
-  editor.load(t.html);
+  loading = true;
+  try { editor.load(t.html); } finally { loading = false; }
   inspector.renderDoc();
   if (!$('de-pane-cites').hidden) inspector.renderCites();
   palette.load(t.state).catch(() => {});
@@ -308,7 +328,7 @@ function renderTabs() {
   const strip = $('de-tabstrip'); strip.innerHTML = '';
   tabs.forEach((t, i) => {
     const el = document.createElement('div'); el.className = 'de-tab' + (i === active ? ' is-on' : '');
-    el.innerHTML = `${t.dirty ? '<span class="de-dirty">•</span>' : ''}<span class="de-tab-title">${(t.state.title || 'Untitled')}</span><span class="de-tab-x">×</span>`;
+    el.innerHTML = `${t.dirty ? '<span class="de-dirty">•</span>' : ''}<span class="de-tab-title">${escapeHTML(t.state.title || 'Untitled')}</span><span class="de-tab-x">×</span>`;
     el.onclick = (e) => { if (e.target.classList.contains('de-tab-x')) closeTab(i); else switchTo(i); };
     el.oncontextmenu = (e) => {
       e.preventDefault();
@@ -322,6 +342,7 @@ function renderTabs() {
 }
 function closeTab(i) {
   if (tabs[i].dirty && !confirm('Close without saving?')) return;
+  clearTimeout(tabs[i].timer);
   const wasActive = i === active;
   tabs.splice(i, 1);
   if (!tabs.length) { active = -1; newTab(); return; }
@@ -338,39 +359,78 @@ async function openArticle(id, replace = false) {
   st.id = a.id; st.authors = a.authors || []; st.tag_ids = a.tag_ids || []; st.citations = a.citations || [];
   st.folder_mounts = a.folder_mounts || [];
   const html = a.content || '<p><br></p>';
-  if (replace && existing >= 0) { tabs[existing].state = st; tabs[existing].html = html; tabs[existing].dirty = false; switchTo(existing, true); }
-  else { tabs.push({ key: 'k' + Math.random().toString(36).slice(2), state: st, html, dirty: false }); switchTo(tabs.length - 1); }
+  if (replace && existing >= 0) {
+    const t = tabs[existing]; clearTimeout(t.timer);
+    t.state = st; t.html = html; t.dirty = false; t.rev = (t.rev || 0) + 1; switchTo(existing, true);
+  } else if (isBlankTab(tabs[active])) {
+    tabs[active] = makeTab(st, html); switchTo(active, true);
+  } else { tabs.push(makeTab(st, html)); switchTo(tabs.length - 1); }
 }
 
-function buildPayload() {
-  const s = ctx.state;
-  const p = { content: editor.serialize(), authors: s.authors, tag_ids: s.tag_ids, citations: s.citations };
+function buildPayload(t) {
+  const s = t.state;
+  const content = t === tabs[active] ? editor.serialize() : t.html;
+  const p = { content, authors: s.authors, tag_ids: s.tag_ids, citations: s.citations };
   META_KEYS.forEach(k => p[k] = s[k]);
   return p;
 }
-async function save(silent = false) {
-  clearTimeout(saveTimer);
-  try {
-    setSave('saving…', 'is-dirty');
-    const payload = buildPayload();
-    if (ctx.state.id) await api.update(ctx.state.id, payload);
-    else { const r = await api.create(payload); ctx.state.id = r.id; sources.load(r.id).catch(() => {}); }
-    if (tabs[active]) tabs[active].dirty = false;
-    api.preview(ctx.state.id).catch(() => {});
-    setSave('saved', 'is-saved'); renderTabs();
-    if (!$('de-pane-history').hidden) inspector.renderHistory();
-  } catch (e) {
-    setSave('save failed', 'is-dirty'); console.error(e); if (!silent) alert('Save failed: ' + e.message);
-  }
+// A never-saved article is created once it has a title or ~20 characters of text.
+function canAutosave(t) {
+  if (t.state.id) return true;
+  const html = t === tabs[active] ? editor.serialize() : t.html;
+  return !!(t.state.title || '').trim() || html.replace(/<[^>]+>/g, '').trim().length >= 20;
 }
-function scheduleAutosave() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { if (ctx.state.id && tabs[active]?.dirty) save(true); }, 1800);
+// One request in flight per tab; edits made meanwhile trigger one follow-up save.
+function save(t = tabs[active], { silent = false, manual = false, message = '' } = {}) {
+  if (!t) return Promise.resolve();
+  clearTimeout(t.timer);
+  if (t.saving) { t.again = true; if (manual) t.againManual = true; return t.saving; }
+  const startRev = t.rev || 0;
+  const payload = buildPayload(t);
+  if (manual) { payload.version = true; payload.version_message = message || 'saved'; }
+  if (t === tabs[active]) setSave('saving…', 'is-dirty');
+  t.saving = (async () => {
+    try {
+      if (t.state.id) await api.update(t.state.id, payload);
+      else {
+        const r = await api.create(payload);
+        t.state.id = r.id;
+        if (t === tabs[active]) sources.load(r.id).catch(() => {});
+      }
+      if ((t.rev || 0) === startRev) t.dirty = false;
+      if (t === tabs[active]) {
+        setSave(t.dirty ? 'unsaved' : 'saved', t.dirty ? 'is-dirty' : 'is-saved');
+        if (!$('de-pane-history').hidden) inspector.renderHistory();
+      }
+      renderTabs();
+    } catch (e) {
+      console.error(e);
+      if (t === tabs[active]) setSave('save failed', 'is-dirty');
+      if (!silent) alert('Save failed: ' + e.message);
+    } finally {
+      t.saving = null;
+      if (t.again) {
+        const m = t.againManual; t.again = t.againManual = false;
+        if (t.dirty || m) save(t, { silent: true, manual: m });
+      }
+    }
+  })();
+  return t.saving;
+}
+function scheduleAutosave(t) {
+  clearTimeout(t.timer);
+  t.timer = setTimeout(() => { if (t.dirty && tabs.includes(t) && canAutosave(t)) save(t, { silent: true }); }, 1500);
 }
 async function doPreview() {
-  await save(true);
-  if (ctx.state.id) window.open(`/previews/${ctx.state.id}.html`, '_blank');
+  await save(tabs[active], { silent: true });
+  if (!ctx.state.id) return;
+  await api.preview(ctx.state.id).catch(() => {});
+  window.open(`/previews/${ctx.state.id}.html`, '_blank');
 }
+const localNow = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+window.addEventListener('beforeunload', (e) => {
+  if (tabs.some(t => t.dirty || t.saving)) { e.preventDefault(); e.returnValue = ''; }
+});
 
 async function openWIP() {
   const drafts = await api.drafts();
@@ -383,11 +443,11 @@ async function openWIP() {
   const grid = back.querySelector('#de-wip-grid');
   drafts.forEach(d => {
     const card = document.createElement('div'); card.className = 'de-wip';
-    const thumb = d.has_preview ? `<iframe src="/previews/${d.id}.html" scrolling="no"></iframe>`
-      : (d.featured_image ? `<img src="${d.featured_image}">` : '');
+    const thumb = d.featured_image ? `<img src="${escapeHTML(d.featured_image)}" alt="" loading="lazy">`
+      : `<span class="de-wip-sub">${escapeHTML(d.subtitle || '')}</span>`;
     card.innerHTML = `<div class="de-wip-thumb">${thumb}</div>
-      <div class="de-wip-meta"><div class="t">${d.title || 'Untitled'}</div>
-      <div class="d">${d.status} · ${d.updated_at ? new Date(d.updated_at).toLocaleDateString() : ''}</div></div>`;
+      <div class="de-wip-meta"><div class="t">${escapeHTML(d.title || 'Untitled')}</div>
+      <div class="d">${escapeHTML(d.status || '')} · ${d.updated_at ? new Date(d.updated_at).toLocaleDateString() : ''}</div></div>`;
     card.onclick = () => { close(); openArticle(d.id); };
     grid.appendChild(card);
   });
@@ -410,6 +470,6 @@ function setSave(text, cls) {
   [a, b].forEach(n => { n.textContent = text; n.className = (n.id === 'de-stat-save' ? cls : ''); });
 }
 const slugish = (t) => t.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').slice(0, 40);
-const escapeHTML = (s) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const escapeHTML = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 boot().catch(e => { console.error(e); alert('Failed to start: ' + e.message); });

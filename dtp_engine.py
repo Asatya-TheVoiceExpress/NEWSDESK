@@ -3965,7 +3965,7 @@ _ART_CONTENT_CSS = r'''
 .art-content .qa-line{margin:.45em 0;text-indent:0}
 .art-content .qa-speaker{font-family:var(--ac-fm);font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;
   font-weight:700;color:var(--ac-ink);margin-right:.35em}
-.art-content sup[data-fn]{font-family:var(--ac-fm);font-size:.6em;font-weight:700}
+.art-content sup[data-fn],.art-content sup[data-cite]{font-family:var(--ac-fm);font-size:.6em;font-weight:700}
 .art-content sup.cite-ref{font-family:var(--ac-fm);font-size:.62em;font-weight:700;color:var(--ac-ink)}
 .art-content .fn{font-family:var(--ac-fb);font-size:.8rem;color:var(--ac-g600);border-top:var(--ac-rt);
   padding-top:.28em;margin:.28em 0}

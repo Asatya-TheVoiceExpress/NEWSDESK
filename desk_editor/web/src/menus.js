@@ -144,18 +144,20 @@ export function initMenus(editor, ctx) {
   });
 
   canvas.addEventListener('mouseover', (e) => {
-    const sup = e.target.closest?.('sup[data-fn]');
+    const sup = e.target.closest?.('sup[data-fn], sup[data-cite]');
     if (!sup) return;
-    const n = parseInt(sup.dataset.fn, 10);
-    const c = ctx.getCitations()[n - 1];
-    const fnp = canvas.querySelector(`#fn${n}`);
+    const isCite = sup.hasAttribute('data-cite');
+    const n = parseInt(isCite ? sup.dataset.cite : sup.dataset.fn, 10);
+    const fnp = isCite ? null : canvas.querySelector(`#fn${n}`);
+    // older articles used data-fn for citations too: fall back to the citation list
+    const c = isCite || !fnp ? ctx.getCitations()[n - 1] : null;
     const txt = c ? (c.reference_text || '') + (c.url ? ` — ${c.url}` : '') : (fnp ? fnp.textContent : '');
     if (!txt) return;
     tip.innerHTML = `<strong>[${n}]</strong> ${escapeHTML(txt)}`;
     const r = sup.getBoundingClientRect();
     tip.hidden = false; place(tip, r.left, r.bottom + 4);
   });
-  canvas.addEventListener('mouseout', (e) => { if (e.target.closest?.('sup[data-fn]')) tip.hidden = true; });
+  canvas.addEventListener('mouseout', (e) => { if (e.target.closest?.('sup[data-fn], sup[data-cite]')) tip.hidden = true; });
 
   const setActive = (opts, i) => { opts.forEach(o => o.classList.remove('is-active')); opts[i]?.classList.add('is-active'); opts[i]?.scrollIntoView({ block: 'nearest' }); };
   canvas.addEventListener('keydown', (e) => {

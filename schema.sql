@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS article_authors (
     author_id  INTEGER NOT NULL REFERENCES authors(id) ON DELETE CASCADE,
     role       TEXT DEFAULT 'author',
     sort_order INTEGER DEFAULT 0,
-    PRIMARY KEY (article_id, author_id)
+    PRIMARY KEY (article_id, author_id, role)
 );
 
 CREATE TABLE IF NOT EXISTS article_tags (

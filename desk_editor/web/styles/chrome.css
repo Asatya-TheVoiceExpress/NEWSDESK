@@ -213,6 +213,7 @@ button.de-good:hover{filter:brightness(1.1);color:#fff;background:var(--de-accen
 .de-wip:hover{border-color:var(--de-accent);box-shadow:0 4px 16px rgba(20,18,14,.12)}
 .de-wip-thumb{aspect-ratio:16/10;background:var(--de-panel2);overflow:hidden}
 .de-wip-thumb iframe,.de-wip-thumb img{width:100%;height:100%;border:0;object-fit:cover}
+.de-wip-sub{display:block;padding:.7rem;font-size:.78rem;line-height:1.4;color:var(--de-dim);overflow:hidden;height:100%}
 .de-wip-meta{padding:.55rem .6rem}
 .de-wip-meta .t{color:var(--de-ink);font-size:.84rem;font-weight:700;line-height:1.2}
 .de-wip-meta .d{color:var(--de-dim);font-family:var(--de-mono);font-size:.66rem;margin-top:.25rem}

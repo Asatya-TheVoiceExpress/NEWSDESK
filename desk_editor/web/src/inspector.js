@@ -17,6 +17,8 @@ export function initInspector(editor, ctx) {
     const inp = document.createElement(area ? 'textarea' : 'input');
     if (!area) inp.type = type;
     inp.value = S()[key] ?? '';
+    // datetime-local rejects seconds/microseconds/timezones, which made stored dates look blank
+    if (type === 'datetime-local' && S()[key]) inp.value = String(S()[key]).replace(' ', 'T').slice(0, 16);
     inp.addEventListener('input', () => { S()[key] = inp.value; ctx.markDirty(); if (key === 'title') ctx.onTitle(); });
     wrap.appendChild(inp);
     if (hint) { const h = document.createElement('div'); h.className = 'de-hint'; h.textContent = hint; wrap.appendChild(h); }
@@ -27,7 +29,7 @@ export function initInspector(editor, ctx) {
     wrap.innerHTML = `<label>${label}</label>`;
     const sel = document.createElement('select');
     sel.innerHTML = '<option value="">—</option>' +
-      options.map(o => `<option value="${o[valKey]}">${o[labKey]}</option>`).join('');
+      options.map(o => `<option value="${escapeHTML(o[valKey])}">${escapeHTML(o[labKey])}</option>`).join('');
     sel.value = S()[key] ?? '';
     sel.addEventListener('change', () => { S()[key] = sel.value || null; ctx.markDirty(); });
     wrap.appendChild(sel); return wrap;
@@ -50,7 +52,7 @@ export function initInspector(editor, ctx) {
       (S().authors || []).forEach((a, i) => {
         const row = document.createElement('div'); row.className = 'de-row'; row.style.marginBottom = '.3rem';
         const who = document.createElement('select');
-        who.innerHTML = lk.authors.map(au => `<option value="${au.id}">${au.name}</option>`).join('');
+        who.innerHTML = lk.authors.map(au => `<option value="${au.id}">${escapeHTML(au.name)}</option>`).join('');
         who.value = a.author_id;
         who.onchange = () => { a.author_id = +who.value; a.name = lk.authors.find(x => x.id == who.value)?.name; ctx.markDirty(); };
         const role = document.createElement('select');
@@ -207,7 +209,7 @@ export function initInspector(editor, ctx) {
       const ins = document.createElement('button'); ins.className = 'de-mini'; ins.textContent = 'Insert ref';
       ins.onclick = () => { editor.focus(); editor.insertCitationRef(i + 1); };
       const del = document.createElement('button'); del.className = 'de-mini'; del.textContent = 'Delete';
-      del.onclick = () => { S().citations.splice(i, 1); renderCites(); ctx.markDirty(); };
+      del.onclick = () => { S().citations.splice(i, 1); editor.renumberCitations(i + 1); renderCites(); ctx.markDirty(); };
       row.append(ins, del); box.appendChild(row); paneCites.appendChild(box);
     });
     const add = document.createElement('button'); add.className = 'de-mini'; add.textContent = '+ citation';
@@ -320,7 +322,10 @@ export function initInspector(editor, ctx) {
       const d = document.createElement('div'); d.className = 'de-version';
       d.innerHTML = `<div class="m">${v.message || 'saved'}</div><div class="d">${new Date(v.created_at).toLocaleString()} · ${v.display_name || ''}</div>`;
       const r = document.createElement('button'); r.className = 'de-mini'; r.textContent = 'Restore'; r.style.marginTop = '.3rem';
-      r.onclick = async () => { if (confirm('Restore this version?')) { await api.restore(S().id, v.id); ctx.reload(); } };
+      r.onclick = async () => {
+        const msg = ctx.isDirty() ? 'Restore this version? Your unsaved changes in this tab will be lost.' : 'Restore this version?';
+        if (confirm(msg)) { await api.restore(S().id, v.id); ctx.reload(); }
+      };
       d.appendChild(r); paneHist.appendChild(d);
     });
   }
